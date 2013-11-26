@@ -79,6 +79,17 @@
 
 #ifndef _common_types_
 #define _common_types_
+#include <stdint.h>
+#include <stddef.h>
+typedef unsigned char boolean;
+typedef int8_t         int8;
+typedef int16_t        int16;
+typedef int32_t        int32;
+typedef uint8_t        uint8;
+typedef int16_t        uint16;
+typedef uint32_t       uint32;
+typedef uint64_t       uint64;
+typedef int64_t        int64;
 
 /*
 ** Includes
@@ -113,17 +124,6 @@
   #undef   _STRUCT_HIGH_BIT_FIRST_
   #define  _STRUCT_LOW_BIT_FIRST_
 
-#ifndef _USING_RTEMS_INCLUDES_
-  typedef unsigned char                         boolean;
-#endif
-
-  typedef signed char                           int8;
-  typedef short int                             int16;
-  typedef long int                              int32;
-  typedef unsigned char                         uint8;
-  typedef unsigned short int                    uint16;
-  typedef unsigned long int                     uint32;
-  _EXTENSION_ typedef unsigned long long int    uint64;
 
 #elif defined(__PPC__)
    /* ----------------------- Motorola Power PC family ---------------------------*/
@@ -132,14 +132,6 @@
    #define _STRUCT_HIGH_BIT_FIRST_
    #undef  _STRUCT_LOW_BIT_FIRST_
 
-   typedef unsigned char                        boolean;
-   typedef signed char                          int8;
-   typedef short int                            int16;
-   typedef long int                             int32;
-   typedef unsigned char                        uint8;
-   typedef unsigned short int                   uint16;
-   typedef unsigned long int                    uint32;
-   _EXTENSION_ typedef unsigned long long int   uint64;
 
 #elif defined(_m68k_)
    /* ----------------------- Motorola m68k/Coldfire family ---------------------------*/
@@ -147,14 +139,6 @@
    #define _STRUCT_HIGH_BIT_FIRST_
    #undef  _STRUCT_LOW_BIT_FIRST_
 
-   typedef unsigned char                        boolean;
-   typedef signed char                          int8;
-   typedef short int                            int16;
-   typedef long int                             int32;
-   typedef unsigned char                        uint8;
-   typedef unsigned short int                   uint16;
-   typedef unsigned long int                    uint32;
-   _EXTENSION_ typedef unsigned long long int   uint64;
 
 #elif defined(__SPARC__)
    /* ----------------------- SPARC/LEON family ---------------------------*/
@@ -162,14 +146,12 @@
    #define _STRUCT_HIGH_BIT_FIRST_
    #undef  _STRUCT_LOW_BIT_FIRST_
 
-   typedef unsigned char                        boolean;
-   typedef signed char                          int8;
-   typedef short int                            int16;
-   typedef long int                             int32;
-   typedef unsigned char                        uint8;
-   typedef unsigned short int                   uint16;
-   typedef unsigned long int                    uint32;
-   _EXTENSION_ typedef unsigned long long int   uint64;
+
+#elif defined(__MICROBLAZE__)
+   /* ----------------------- SPARC/LEON family ---------------------------*/
+   /* SPARC Big endian */
+   #define _STRUCT_HIGH_BIT_FIRST_
+   #undef  _STRUCT_LOW_BIT_FIRST_
 
 #else  /* not any of the above */
    #error undefined processor

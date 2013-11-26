@@ -116,7 +116,7 @@ typedef char os_err_name_t[35];
 */
 typedef void osal_task;
 typedef osal_task ((*osal_task_entry)(void));
-
+//typedef osal_task ((*osal_task_entry)(void));
 /*
 ** Exported Functions
 */

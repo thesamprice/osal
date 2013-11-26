@@ -34,7 +34,7 @@
 #include <sys/signal.h>
 #include <sys/errno.h>
 #include <pthread.h>
-
+#include "osmac_stuff.h"
 /****************************************************************************************
                                 EXTERNAL FUNCTION PROTOTYPES
 ****************************************************************************************/

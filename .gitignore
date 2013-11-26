@@ -1,0 +1,6 @@
+*.o
+*.dblite
+*.a
+*.dylib
+*.so
+*.os
