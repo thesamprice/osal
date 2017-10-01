@@ -85,6 +85,15 @@
                                     INCLUDE FILES
 ****************************************************************************************/
 
+#ifdef __APPLE__
+/* TODO Not sure if this is correct to do for darwin */
+#define _DARWIN_C_SOURCE 1
+#include <sys/mount.h>
+
+#else
+#include <sys/vfs.h>
+
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,7 +108,7 @@
 #include "common_types.h"
 #include "osapi.h"
 
-#include <sys/vfs.h>
+
 /****************************************************************************************
                                      DEFINES
 ****************************************************************************************/
