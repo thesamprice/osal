@@ -4,6 +4,8 @@
 #include "common_types.h"
 #include "osapi.h"
 
+#ifdef OSAL_MQD_QUEUE 
+
 #include <mqueue.h>
 
 
@@ -17,3 +19,4 @@ typedef struct
 }OS_queue_internal_record_t;
 
 #endif
+#endif 

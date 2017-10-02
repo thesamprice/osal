@@ -1,5 +1,5 @@
 #include "queue_mqd.h"
-#ifndef OSAL_SOCKET_QUEUE
+#ifdef OSAL_MQD_QUEUE
 
 /* queues */
 
@@ -402,4 +402,4 @@ return OS_SUCCESS;
 } /* end OS_QueuePut */
 
 
-#endif
+#endif /* OSAL_MQD_QUEUE */
