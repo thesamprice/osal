@@ -4,6 +4,9 @@
 ****************************************************************************************/
 #include "common_types.h"
 #include "osapi.h"
+
+#define OS_VARIABLE_SIZED_QUEUE        (2)
+
 typedef struct
 {
     int    free;
@@ -19,6 +22,10 @@ typedef struct
 ** include so it can pick up the define
 */
 #include <sys/fcntl.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <semaphore.h>
+#include <errno.h>
 
 /*Defines*/
 #define OS_BASE_PORT 43000
@@ -70,6 +77,8 @@ pthread_mutex_t OS_queue_table_mut;
 
 int OS_QueueInit()
 {
+    int i =0;
+    int ret = 0;
         /* Initialize Message Queue Table */
 
     for(i = 0; i < OS_MAX_QUEUES; i++)
@@ -83,11 +92,11 @@ int OS_QueueInit()
    ret = pthread_mutex_init((pthread_mutex_t *) & OS_queue_table_mut,NULL);
    if ( ret != 0 )
    {
-      return_code = OS_ERROR;
-      return(return_code);
+
+      return (OS_ERROR);
    }
 
-    return 0;
+    return ret;
 }
 
 /****************************************************************************************
@@ -440,7 +449,7 @@ int32 OS_QueueGet (uint32 queue_id, void *data, uint32 size, uint32 *size_copied
  Notes: The flags parameter is not used.  The message put is always configured to
  immediately return an error if the receiving message queue is full.
  ---------------------------------------------------------------------------------------*/
-int32 OS_QueuePut (uint32 queue_id, void *data, uint32 size, uint32 flags)
+int32 OS_QueuePut (uint32 queue_id, const void *data, uint32 size, uint32 flags)
 {
 
     OS_queue_record_t * queue;
