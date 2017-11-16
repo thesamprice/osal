@@ -1,0 +1,6 @@
+TEMPLATE = lib
+HEADERS = ../../bsp/pc-linux/config/osconfig.h
+HEADERS += ../inc/osapi-os-core.h
+INCLUDEPATH = ../../bsp/pc-linux/config
+INCLUDEPATH += ../inc
+SOURCES = osapi.cpp

@@ -534,73 +534,73 @@ int32 OS_QueuePut (uint32 queue_id, const void *data, uint32 size, uint32 flags)
 
 ---------------------------------------------------------------------------------------*/
 
-int32 OS_QueueGetIdByName (uint32 *queue_id, const char *queue_name)
-{
-    uint32 i;
+// int32 OS_QueueGetIdByName (uint32 *queue_id, const char *queue_name)
+// {
+//     uint32 i;
 
-    if(queue_id == NULL || queue_name == NULL)
-    {
-       return OS_INVALID_POINTER;
-    }
+//     if(queue_id == NULL || queue_name == NULL)
+//     {
+//        return OS_INVALID_POINTER;
+//     }
 
-    /* a name too long wouldn't have been allowed in the first place
-     * so we definitely won't find a name too long*/
+//     /* a name too long wouldn't have been allowed in the first place
+//      * so we definitely won't find a name too long*/
 
-    if (strlen(queue_name) > OS_MAX_API_NAME)
-    {
-       return OS_ERR_NAME_TOO_LONG;
-    }
+//     if (strlen(queue_name) > OS_MAX_API_NAME)
+//     {
+//        return OS_ERR_NAME_TOO_LONG;
+//     }
 
-    for (i = 0; i < OS_MAX_QUEUES; i++)
-    {
-        if (OS_queue_table[i].free != TRUE &&
-           (strcmp(OS_queue_table[i].name, (char*) queue_name) == 0 ))
-        {
-            *queue_id = i;
-            return OS_SUCCESS;
-        }
-    }
+//     for (i = 0; i < OS_MAX_QUEUES; i++)
+//     {
+//         if (OS_queue_table[i].free != TRUE &&
+//            (strcmp(OS_queue_table[i].name, (char*) queue_name) == 0 ))
+//         {
+//             *queue_id = i;
+//             return OS_SUCCESS;
+//         }
+//     }
 
-    /* The name was not found in the table,
-     *  or it was, and the queue_id isn't valid anymore */
-    return OS_ERR_NAME_NOT_FOUND;
+//     /* The name was not found in the table,
+//      *  or it was, and the queue_id isn't valid anymore */
+//     return OS_ERR_NAME_NOT_FOUND;
 
-}/* end OS_QueueGetIdByName */
+// }/* end OS_QueueGetIdByName */
 
-/*---------------------------------------------------------------------------------------
-    Name: OS_QueueGetInfo
+// /*---------------------------------------------------------------------------------------
+//     Name: OS_QueueGetInfo
 
-    Purpose: This function will pass back a pointer to structure that contains
-             all of the relevant info (name and creator) about the specified queue.
+//     Purpose: This function will pass back a pointer to structure that contains
+//              all of the relevant info (name and creator) about the specified queue.
 
-    Returns: OS_INVALID_POINTER if queue_prop is NULL
-             OS_ERR_INVALID_ID if the ID given is not  a valid queue
-             OS_SUCCESS if the info was copied over correctly
----------------------------------------------------------------------------------------*/
-int32 OS_QueueGetInfo (uint32 queue_id, OS_queue_prop_t *queue_prop)
-{
-    /* Check to see that the id given is valid */
+//     Returns: OS_INVALID_POINTER if queue_prop is NULL
+//              OS_ERR_INVALID_ID if the ID given is not  a valid queue
+//              OS_SUCCESS if the info was copied over correctly
+// ---------------------------------------------------------------------------------------*/
+// int32 OS_QueueGetInfo (uint32 queue_id, OS_queue_prop_t *queue_prop)
+// {
+//     /* Check to see that the id given is valid */
 
-    if (queue_prop == NULL)
-    {
-        return OS_INVALID_POINTER;
-    }
+//     if (queue_prop == NULL)
+//     {
+//         return OS_INVALID_POINTER;
+//     }
 
-    if (queue_id >= OS_MAX_QUEUES || OS_queue_table[queue_id].free == TRUE)
-    {
-        return OS_ERR_INVALID_ID;
-    }
+//     if (queue_id >= OS_MAX_QUEUES || OS_queue_table[queue_id].free == TRUE)
+//     {
+//         return OS_ERR_INVALID_ID;
+//     }
 
-    /* put the info into the stucture */
-    pthread_mutex_lock(&OS_queue_table_mut);
+//     /* put the info into the stucture */
+//     pthread_mutex_lock(&OS_queue_table_mut);
 
-    queue_prop -> creator =   OS_queue_table[queue_id].creator;
-    strcpy(queue_prop -> name, OS_queue_table[queue_id].name);
+//     queue_prop -> creator =   OS_queue_table[queue_id].creator;
+//     strcpy(queue_prop -> name, OS_queue_table[queue_id].name);
 
-    pthread_mutex_unlock(&OS_queue_table_mut);
+//     pthread_mutex_unlock(&OS_queue_table_mut);
 
-    return OS_SUCCESS;
+//     return OS_SUCCESS;
 
-} /* end OS_QueueGetInfo */
+// } /* end OS_QueueGetInfo */
 
 #endif /* OSAL_QUEUE_MUTEX */
