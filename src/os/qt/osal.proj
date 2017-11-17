@@ -4,3 +4,4 @@ HEADERS += ../inc/osapi-os-core.h
 INCLUDEPATH = ../../bsp/pc-linux/config
 INCLUDEPATH += ../inc
 SOURCES = osapi.cpp
+SOURCES += ostimer.cpp

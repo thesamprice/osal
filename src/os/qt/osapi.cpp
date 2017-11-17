@@ -20,7 +20,7 @@ class OSALThread: public QThread
         void run() override {
             if(function_pointer != 0x0)
             {
-                function_pointer(data);
+                function_pointer( );
             }
         }
 
@@ -80,7 +80,7 @@ void OS_TaskExit               (void){
         return;
 
     task->quit();
-    task->delete_handler(NULL);
+    task->delete_handler();
 
 }
 int32 OS_TaskInstallDeleteHandler(osal_task_entry function_pointer){
