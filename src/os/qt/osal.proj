@@ -5,3 +5,5 @@ INCLUDEPATH = ../../bsp/pc-linux/config
 INCLUDEPATH += ../inc
 SOURCES = osapi.cpp
 SOURCES += ostimer.cpp
+SOURCES += osfileapi.cpp 
+SOURCES += osfilesys.cpp

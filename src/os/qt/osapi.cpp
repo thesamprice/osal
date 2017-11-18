@@ -8,6 +8,7 @@ class OSALThread: public QThread
         void * data;
         osal_task_entry delete_handler;
         uint32 task_id;
+        uint32 creator;
         /*!
          * Origianl priority. Qt squashes to 0 to 6
          */
@@ -58,6 +59,11 @@ int32 OS_TaskCreate            (uint32 *task_id, const char *task_name,
     new_task->task_name = task_name;
     new_task->flags = flags;
     new_task->data = 0x0;
+    OSALThread * creator = dynamic_cast< OSALThread *>(QThread::currentThread() );
+    if(creator == 0x0)
+        new_task->creator = -1;
+    new_task->creator = creator->task_id;
+
 
     OS_TaskSetPriority(i,priority);
 
@@ -98,6 +104,14 @@ int32 OS_TaskDelay             (uint32 millisecond){
         return OS_ERROR_TIMEOUT;
 
     return OS_SUCCESS;
+}
+uint32 OS_FindCreator(void){
+
+    OSALThread * task = dynamic_cast< OSALThread *>(QThread::currentThread() );
+    if(task == 0x0)
+        return -1;
+
+    return task->creator;
 }
 static int32 OS_GetTask(uint32 task_id, OSALThread ** task){
 //    if(task_id < 0)
