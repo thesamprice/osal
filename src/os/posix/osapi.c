@@ -217,15 +217,17 @@ typedef void (*FuncPtr_t)(void);
 /****************************************************************************************
                                 MESSAGE QUEUE API
 ****************************************************************************************/
+#include "osqueue.h"
+/*
 #ifdef OSAL_SOCKET_QUEUE
 #include "queue_socket.h"
 #elif OSAL_MQD_QUEUE 
 #include "queue_mqd.h"
 #else
 #include "queue_socket.h"
-/* --------------------- END POSIX MESSAGE QUEUE IMPLEMENTATION ---------------------- */
 #endif
-
+*/
+/* --------------------- END POSIX MESSAGE QUEUE IMPLEMENTATION ---------------------- */
 
 /* Tables where the OS object information is stored */
 OS_task_internal_record_t    OS_task_table          [OS_MAX_TASKS];
@@ -335,14 +337,7 @@ int32 OS_API_Init(void)
     }
 
     /* Initialize Message Queue Table */
-
-    for(i = 0; i < OS_MAX_QUEUES; i++)
-    {
-        OS_queue_table[i].free        = TRUE;
-        OS_queue_table[i].id          = UNINITIALIZED;
-        OS_queue_table[i].creator     = UNINITIALIZED;
-        strcpy(OS_queue_table[i].name,""); 
-    }
+    OS_QueueInit();
 
     /* Initialize Binary Semaphore Table */
 
