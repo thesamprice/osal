@@ -1,5 +1,5 @@
 #include <QtCore>
-#include "osconfig.h"
+//#include "osconfig.h"
 #include "osapi.h"
 class OSALThread: public QThread
 {

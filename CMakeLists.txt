@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6.4)
-project(OSAL C)
+project(OSAL )
 
 enable_testing()
 
@@ -52,6 +52,7 @@ message(STATUS "OSAL Selection: ${OSAL_SYSTEM_OSTYPE}")
 if (OSAL_SYSTEM_BSPTYPE AND NOT CFE_SYSTEM_PSPNAME)
   if (IS_DIRECTORY ${OSAL_SOURCE_DIR}/src/bsp/${OSAL_SYSTEM_BSPTYPE})
     include(src/bsp/${OSAL_SYSTEM_BSPTYPE}/make/build_options.cmake OPTIONAL)
+    include_directories(src/bsp/${OSAL_SYSTEM_BSPTYPE}/config)
     message(STATUS "OSAL BSP Selection: ${OSAL_SYSTEM_BSPTYPE}")
   else()
     message(FATAL_ERROR "Error: ${OSAL_SYSTEM_BSPTYPE} is not a valid BSP")
@@ -87,6 +88,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ut_assert/inc)
 
 # Include any user-specified header file directory
 if (OSAL_INCLUDEDIR)
+  message(STATUS "User includes: ${OSAL_INCLUDEDIR}") 
+
   include_directories(${OSAL_INCLUDEDIR})
 endif (OSAL_INCLUDEDIR)
 

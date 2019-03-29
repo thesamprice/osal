@@ -23,6 +23,13 @@ This distribution contains:
 Getting Started:
 ================
 
+`
+mkdir build
+cd build
+cmake -OSAL_SYSTEM_OSTYPE=qt ..
+make
+
+`
 See the document *doc/OSAL-Configuration-Guide.doc* for complete details.
 
 An easy way to get started is to use the Linux port and classic build: 

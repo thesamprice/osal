@@ -1257,7 +1257,7 @@ int32  OS_rmdir (const char *path)
 
 int32 OS_check_name_length(const char *path)
 {
-    char* name_ptr;
+    const char* name_ptr;
 
     if (path == NULL)
     {
