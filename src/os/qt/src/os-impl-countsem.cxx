@@ -171,8 +171,6 @@ int32 OS_CountSemTake_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_CountSemTimedWait_Impl(const OS_object_token_t *token, uint32 msecs)
 {
-    struct timespec                     ts;
-    int                                 result;
     OS_impl_countsem_internal_record_t *impl;
 
     impl = OS_OBJECT_TABLE_GET(OS_impl_count_sem_table, *token);
@@ -196,7 +194,6 @@ int32 OS_CountSemTimedWait_Impl(const OS_object_token_t *token, uint32 msecs)
  *-----------------------------------------------------------------*/
 int32 OS_CountSemGetInfo_Impl(const OS_object_token_t *token, OS_count_sem_prop_t *count_prop)
 {
-    int                                 sval;
     OS_impl_countsem_internal_record_t *impl;
 
     impl = OS_OBJECT_TABLE_GET(OS_impl_count_sem_table, *token);

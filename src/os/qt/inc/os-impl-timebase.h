@@ -41,17 +41,16 @@ typedef struct
 {
     int start_ms;
     int interval_ms;
-    QTimer * timer;
+    QTimer timer;
     QMutex handler_mutex;
     QWaitCondition sigWaiter;
     QMutex        sigMutex;
-    std::list<int> signalIDs;
-    int             assigned_signal;
+
     OS_impl_task_internal_record_t handler_thread;
     // pthread_t       handler_thread;
     char name[OS_MAX_API_NAME];
     sig_atomic_t    reset_flag;
-    struct timespec softsleep;
+    // struct timespec softsleep;
 
 } OS_impl_timebase_internal_record_t;
 

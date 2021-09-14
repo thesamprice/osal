@@ -262,8 +262,8 @@ int32 OS_QueueGet_Impl(const OS_object_token_t *token, void *data, size_t size, 
 int32 OS_QueuePut_Impl(const OS_object_token_t *token, const void *data, size_t size, uint32 flags)
 {
     int32                            return_code =OS_SUCCESS;
-    int                              result;
-    struct timespec                  ts;
+    //int                              result;
+    // struct timespec                  ts;
     OS_impl_queue_internal_record_t *impl;
 
     impl = OS_OBJECT_TABLE_GET(OS_impl_queue_table, *token);

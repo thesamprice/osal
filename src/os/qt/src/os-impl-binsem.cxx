@@ -119,7 +119,6 @@ extern "C" {
  *-----------------------------------------------------------------*/
 int32 OS_BinSemCreate_Impl(const OS_object_token_t *token, uint32 initial_value, uint32 options)
 {
-    int                               ret;
     int                               attr_created;
     int                               mutex_created;
     int                               cond_created;
@@ -166,7 +165,7 @@ int32 OS_BinSemCreate_Impl(const OS_object_token_t *token, uint32 initial_value,
         sem->cv = new QWaitCondition();        
         if (sem->cv==  NULL)
         {
-            OS_DEBUG("Error: pthread_cond_init failed: %s\n", strerror(ret));
+            OS_DEBUG("Error: pthread_cond_init failed: \n");
             return_code = OS_SEM_FAILURE;
             break;
         }

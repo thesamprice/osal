@@ -50,7 +50,7 @@ extern "C" {
                                 INTERNAL FUNCTION PROTOTYPES
  ***************************************************************************************/
 
-static void OS_UsecToTimespec(uint32 usecs, struct timespec *time_spec);
+static int64 OS_UsecToMili(uint32 usecs);
 
 /****************************************************************************************
                                      DEFINES
@@ -86,19 +86,14 @@ OS_impl_timebase_internal_record_t OS_impl_timebase_table[OS_MAX_TIMEBASES];
  *           Convert Microseconds to a POSIX timespec structure.
  *
  *-----------------------------------------------------------------*/
-static void OS_UsecToTimespec(uint32 usecs, struct timespec *time_spec)
+static int64 OS_UsecToMili(uint32 usecs)
 {
 
-    if (usecs < 1000000)
+    if (usecs < 1000)
     {
-        time_spec->tv_nsec = (usecs * 1000);
-        time_spec->tv_sec  = 0;
+        return 1;
     }
-    else
-    {
-        time_spec->tv_sec  = usecs / 1000000;
-        time_spec->tv_nsec = (usecs % 1000000) * 1000;
-    }
+    return ((int64) usecs)/1000;
 } /* end OS_UsecToTimespec */
 
 extern "C" {
@@ -138,61 +133,61 @@ void OS_TimeBaseUnlock_Impl(const OS_object_token_t *token)
     impl->handler_mutex.unlock();
 } /* end OS_TimeBaseUnlock_Impl */
 
-/*----------------------------------------------------------------
- *
- * Function: OS_TimeBase_SoftWaitImpl
- *
- *  Purpose: Local helper routine, not part of OSAL API.
- *
- *-----------------------------------------------------------------*/
-static uint32 OS_TimeBase_SigWaitImpl(osal_id_t obj_id)
-{
-    bool                                 ret;
-    OS_object_token_t                   token;
-    OS_impl_timebase_internal_record_t *impl;
-    OS_timebase_internal_record_t *     timebase;
-    uint32                              interval_time;
+// /*----------------------------------------------------------------
+//  *
+//  * Function: OS_TimeBase_SoftWaitImpl
+//  *
+//  *  Purpose: Local helper routine, not part of OSAL API.
+//  *
+//  *-----------------------------------------------------------------*/
+// static uint32 OS_TimeBase_SigWaitImpl(osal_id_t obj_id)
+// {
+//     bool                                 ret;
+//     OS_object_token_t                   token;
+//     OS_impl_timebase_internal_record_t *impl;
+//     OS_timebase_internal_record_t *     timebase;
+//     uint32                              interval_time;
 
-    interval_time = 0;
+//     interval_time = 0;
 
-    if (OS_ObjectIdGetById(OS_LOCK_MODE_NONE, OS_OBJECT_TYPE_OS_TIMEBASE, obj_id, &token) == OS_SUCCESS)
-    {
-        impl     = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, token);
-        timebase = OS_OBJECT_TABLE_GET(OS_timebase_table, token);
+//     if (OS_ObjectIdGetById(OS_LOCK_MODE_NONE, OS_OBJECT_TYPE_OS_TIMEBASE, obj_id, &token) == OS_SUCCESS)
+//     {
+//         impl     = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, token);
+//         timebase = OS_OBJECT_TABLE_GET(OS_timebase_table, token);
 
-        impl->sigMutex.lock();
-        ret = impl->sigWaiter.wait(&impl->sigMutex);
-        impl->sigMutex.unlock();
+//         impl->sigMutex.lock();
+//         ret = impl->sigWaiter.wait(&impl->sigMutex);
+//         impl->sigMutex.unlock();
 
-        if (ret == false)
-        {
-            /*
-             * the sigwait call failed.
-             * returning 0 will cause the process to repeat.
-             */
-        }
-        else if (impl->reset_flag == 0)
-        {
-            /*
-             * Normal steady-state behavior.
-             * interval_time reflects the configured interval time.
-             */
-            interval_time = timebase->nominal_interval_time;
-        }
-        else
-        {
-            /*
-             * Reset/First interval behavior.
-             * timer_set() was invoked since the previous interval occurred (if any).
-             * interval_time reflects the configured start time.
-             */
-            interval_time    = timebase->nominal_start_time;
-            impl->reset_flag = 0;
-        }
-    }
+//         if (ret == false)
+//         {
+//             /*
+//              * the sigwait call failed.
+//              * returning 0 will cause the process to repeat.
+//              */
+//         }
+//         else if (impl->reset_flag == 0)
+//         {
+//             /*
+//              * Normal steady-state behavior.
+//              * interval_time reflects the configured interval time.
+//              */
+//             interval_time = timebase->nominal_interval_time;
+//         }
+//         else
+//         {
+//             /*
+//              * Reset/First interval behavior.
+//              * timer_set() was invoked since the previous interval occurred (if any).
+//              * interval_time reflects the configured start time.
+//              */
+//             interval_time    = timebase->nominal_start_time;
+//             impl->reset_flag = 0;
+//         }
+//     }
 
-    return interval_time;
-} /* end OS_TimeBase_SoftWaitImpl */
+//     return interval_time;
+// } /* end OS_TimeBase_SoftWaitImpl */
 
 /****************************************************************************************
                                 INITIALIZATION FUNCTION
@@ -222,166 +217,67 @@ static void *OS_TimeBasePthreadEntry(void *arg)
  *-----------------------------------------------------------------*/
 int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
 {
-    return OS_SUCCESS;
-    // return OS_ERR_NOT_IMPLEMENTED;
-    // int32                               return_code;
-    // int                                 status;
-    // int                                 i;
-    // osal_index_t                        idx;
+    return OS_ERR_NOT_IMPLEMENTED;
+    int32                               return_code;
     // struct sigevent                     evp;
     // struct timespec                     ts;
-    // OS_impl_timebase_internal_record_t *local;
-    // OS_timebase_internal_record_t *     timebase;
-    // OS_VoidPtrValueWrapper_t                arg;
+    OS_impl_timebase_internal_record_t *local;
+    OS_timebase_internal_record_t *     timebase;
+    OS_VoidPtrValueWrapper_t                arg;
 
-    // local    = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
-    // timebase = OS_OBJECT_TABLE_GET(OS_timebase_table, *token);
+    local    = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    timebase = OS_OBJECT_TABLE_GET(OS_timebase_table, *token);
 
-    // /*
-    //  * Spawn a dedicated time base handler thread
-    //  *
-    //  * This alleviates the need to handle expiration in the context of a signal handler -
-    //  * The handler thread can call a BSP synchronized delay implementation as well as the
-    //  * application callback function.  It should run with elevated priority to reduce latency.
-    //  *
-    //  * Note the thread will not actually start running until this function exits and releases
-    //  * the global table lock.
-    //  */
-    // arg.opaque_arg = NULL;
-    // arg.id         = OS_ObjectIdFromToken(token);
-    // return_code    = OS_QT_InternalTaskCreate_Impl(&local->handler_thread, OSAL_PRIORITY_C(0), 0,
-    //                                                OS_TimeBasePthreadEntry, arg.opaque_arg);
-    // if (return_code != OS_SUCCESS)
-    // {
-    //     return return_code;
-    // }
+    /*
+     * Spawn a dedicated time base handler thread
+     *
+     * This alleviates the need to handle expiration in the context of a signal handler -
+     * The handler thread can call a BSP synchronized delay implementation as well as the
+     * application callback function.  It should run with elevated priority to reduce latency.
+     *
+     * Note the thread will not actually start running until this function exits and releases
+     * the global table lock.
+     */
+    arg.opaque_arg = NULL;
+    arg.id         = OS_ObjectIdFromToken(token);
+    osal_priority_t priority = 0;
+    return_code    = OS_QT_InternalTaskCreate_Impl(&local->handler_thread, priority, 0,
+                                                   OS_TimeBasePthreadEntry, arg.opaque_arg);
+    if (return_code != OS_SUCCESS)
+    {
+        return return_code;
+    }
 
-    // local->assigned_signal = 0;
-    // clock_gettime(OS_PREFERRED_CLOCK, &local->softsleep);
+    /*
+     * Set up the necessary OS constructs
+     *
+     * If an external sync function is used then there is nothing to do here -
+     * we simply call that function and it should synchronize to the time source.
+     *
+     * If no external sync function is provided then this will set up a POSIX
+     * timer to locally simulate the timer tick using the CPU clock.
+     */
+    if (timebase->external_sync == NULL)
+    {
+        local->sigMutex.unlock();
 
-    // /*
-    //  * Set up the necessary OS constructs
-    //  *
-    //  * If an external sync function is used then there is nothing to do here -
-    //  * we simply call that function and it should synchronize to the time source.
-    //  *
-    //  * If no external sync function is provided then this will set up a POSIX
-    //  * timer to locally simulate the timer tick using the CPU clock.
-    //  */
-    // if (timebase->external_sync == NULL)
-    // {
-    //     local->sigMutex.unlock();
+    }
+    else{
+        return_code = OS_ERR_NOT_IMPLEMENTED;
+    }
 
-    //     /*
-    //      * find an RT signal that is not used by another time base object.
-    //      * This is all done while the global lock is held so no chance of the
-    //      * underlying tables changing
-    //      */
-    //     for (idx = 0; idx < OS_MAX_TIMEBASES; ++idx)
-    //     {
-    //         if (OS_ObjectIdDefined(OS_global_timebase_table[idx].active_id) &&
-    //             OS_impl_timebase_table[idx].assigned_signal != 0)
-    //         {
-    //             /* sigaddset(&local->sigset, OS_impl_timebase_table[idx].assigned_signal); */
-    //             local->signalIDs.push_back(OS_impl_timebase_table[idx].assigned_signal);
-    //         }
-    //     }
+    if (return_code != OS_SUCCESS)
+    {
+        /*
+         * NOTE about the thread cancellation -- this technically is just a backup,
+         * we should not need to cancel it because the handler thread will exit automatically
+         * if the active ID does not match the expected value.  This check would fail
+         * if this function returns non-success (the ID in the global will be set zero)
+         */
+        local->handler_thread.thread->terminate();
+    }
 
-    //     for (i = SIGRTMIN; i <= SIGRTMAX; ++i)
-    //     {
-    //         bool sigIsMember = (std::find(local->signalIDs.begin(), local->signalIDs.end(), OS_impl_timebase_table[idx].assigned_signal) != local->signalIDs.end());
-
-            
-    //         if (!sigismember(&local->sigMutex, i))
-    //         {
-    //             local->assigned_signal = i;
-    //             break;
-    //         }
-    //     }
-
-    //     do
-    //     {
-    //         if (local->assigned_signal == 0)
-    //         {
-    //             OS_DEBUG("No free RT signals to use for simulated time base\n");
-    //             return_code = OS_TIMER_ERR_UNAVAILABLE;
-    //             break;
-    //         }
-
-    //         sigemptyset(&local->sigMutex);
-    //         sigaddset(&local->sigMutex, local->assigned_signal);
-
-    //         /*
-    //          * Ensure that the chosen signal is NOT already pending.
-    //          *
-    //          * Perform a "sigtimedwait" with a zero timeout to poll the
-    //          * status of the selected signal.  RT signals are also queued,
-    //          * so this needs to be called in a loop to until sigtimedwait()
-    //          * returns an error.
-    //          *
-    //          * The max number of signals that can be queued is available
-    //          * via sysconf() as the _SC_SIGQUEUE_MAX value.
-    //          *
-    //          * The output is irrelevant here; the objective is to just ensure
-    //          * that the signal is not already pending.
-    //          */
-    //         i = sysconf(_SC_SIGQUEUE_MAX);
-    //         do
-    //         {
-    //             ts.tv_sec  = 0;
-    //             ts.tv_nsec = 0;
-    //             if (sigtimedwait(&local->sigMutex, NULL, &ts) < 0)
-    //             {
-    //                 /* signal is NOT pending */
-    //                 break;
-    //             }
-    //             --i;
-    //         } while (i > 0);
-
-    //         /*
-    //         **  Initialize the sigevent structures for the handler.
-    //         */
-    //         memset((void *)&evp, 0, sizeof(evp));
-    //         evp.sigev_notify = SIGEV_SIGNAL;
-    //         evp.sigev_signo  = local->assigned_signal;
-
-    //         /*
-    //          * Pass the Timer Index value of the object ID to the signal handler --
-    //          *  Note that the upper bits can be safely assumed as a timer ID to recreate the original,
-    //          *  and doing it this way should still work on a system where sizeof(sival_int) < sizeof(uint32)
-    //          *  (as long as sizeof(sival_int) >= number of bits in OS_OBJECT_INDEX_MASK)
-    //          */
-    //         evp.sigev_value.sival_int = (int)OS_ObjectIdToSerialNumber_Impl(OS_ObjectIdFromToken(token));
-
-    //         /*
-    //         ** Create the timer
-    //         ** Note using the "MONOTONIC" clock here as this will still produce consistent intervals
-    //         ** even if the system clock is stepped (e.g. clock_settime).
-    //         */
-    //         status = timer_create(OS_PREFERRED_CLOCK, &evp, &local->host_timerid);
-    //         if (status < 0)
-    //         {
-    //             return_code = OS_TIMER_ERR_UNAVAILABLE;
-    //             break;
-    //         }
-
-    //         timebase->external_sync = OS_TimeBase_SigWaitImpl;
-    //     } while (0);
-    // }
-
-    // if (return_code != OS_SUCCESS)
-    // {
-    //     /*
-    //      * NOTE about the thread cancellation -- this technically is just a backup,
-    //      * we should not need to cancel it because the handler thread will exit automatically
-    //      * if the active ID does not match the expected value.  This check would fail
-    //      * if this function returns non-success (the ID in the global will be set zero)
-    //      */
-    //     local->handler_thread->stop();
-    //     local->assigned_signal = 0;
-    // }
-
-    // return return_code;
+    return return_code;
 } /* end OS_TimeBaseCreate_Impl */
 
 /*----------------------------------------------------------------
@@ -394,51 +290,44 @@ int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uint32 interval_time)
 {
-    return OS_ERR_NOT_IMPLEMENTED;
-    // OS_impl_timebase_internal_record_t *local;
+    OS_impl_timebase_internal_record_t *local;
     // struct itimerspec                   timeout;
-    // int32                               return_code;
-    // int                                 status;
-    // OS_timebase_internal_record_t *     timebase;
+    int32                               return_code;
+    int                                 status;
+    OS_timebase_internal_record_t *     timebase;
 
-    // local       = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
-    // timebase    = OS_OBJECT_TABLE_GET(OS_timebase_table, *token);
-    // return_code = OS_SUCCESS;
+    local       = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    timebase    = OS_OBJECT_TABLE_GET(OS_timebase_table, *token);
+    return_code = OS_SUCCESS;
+    return OS_ERR_NOT_IMPLEMENTED;
 
-    // /* There is only something to do here if we are generating a simulated tick */
-    // if (local->assigned_signal != 0)
-    // {
-    //     /*
-    //     ** Convert from Microseconds to timespec structures
-    //     */
-    //     memset(&timeout, 0, sizeof(timeout));
-    //     OS_UsecToTimespec(start_time, &timeout.it_value);
-    //     OS_UsecToTimespec(interval_time, &timeout.it_interval);
+    /* There is only something to do here if we are generating a simulated tick */
 
-    //     /*
-    //     ** Program the real timer
-    //     */
-    //     status = timer_settime(local->host_timerid, 0, /* Flags field can be zero */
-    //                            &timeout,               /* struct itimerspec */
-    //                            NULL);                  /* Oldvalue */
+    local->start_ms    = OS_UsecToMili(start_time);
+    local->interval_ms = OS_UsecToMili(interval_time);
+    /*
+    ** Convert from Microseconds to timespec structures
+    */
 
-    //     if (status < 0)
-    //     {
-    //         OS_DEBUG("Error in timer_settime: %s\n", strerror(errno));
-    //         return_code = OS_TIMER_ERR_INTERNAL;
-    //     }
-    //     else if (interval_time > 0)
-    //     {
-    //         timebase->accuracy_usec = (uint32)((timeout.it_interval.tv_nsec + 999) / 1000);
-    //     }
-    //     else
-    //     {
-    //         timebase->accuracy_usec = (uint32)((timeout.it_value.tv_nsec + 999) / 1000);
-    //     }
-    // }
+    /*
+    ** Program the real timer
+    */
+    local->timer.setInterval(local->interval_ms);
+    local->timer.start();
+    if (status < 0)
+    {
+        OS_DEBUG("Error in timer_settime: %s\n", strerror(errno));
+        return_code = OS_TIMER_ERR_INTERNAL;
+    }
 
-    // local->reset_flag = (return_code == OS_SUCCESS);
-    // return return_code;
+    /* QT is good at milisecond level, on windows i think its 15miliseconds 
+    * 1000 us in a mili sec
+    */
+    timebase->accuracy_usec = 1000;
+
+
+    local->reset_flag = (return_code == OS_SUCCESS);
+    return return_code;
 } /* end OS_TimeBaseSet_Impl */
 
 /*----------------------------------------------------------------
@@ -451,30 +340,22 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
  *-----------------------------------------------------------------*/
 int32 OS_TimeBaseDelete_Impl(const OS_object_token_t *token)
 {
-    return OS_ERR_NOT_IMPLEMENTED;
-    // OS_impl_timebase_internal_record_t *local;
-    // int                                 status;
 
-    // local = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    OS_impl_timebase_internal_record_t *local;
 
-    // pthread_cancel(local->handler_thread);
+    local = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
 
-    // /*
-    // ** Delete the timer
-    // */
-    // if (local->assigned_signal != 0)
-    // {
-    //     status = timer_delete(local->host_timerid);
-    //     if (status < 0)
-    //     {
-    //         OS_DEBUG("Error deleting timer: %s\n", strerror(errno));
-    //         return (OS_TIMER_ERR_INTERNAL);
-    //     }
+    /*
+    ** Delete the timer
+    */
+    local->timer.stop();
+    if (local->timer.isActive() == true )
+    {
+        OS_DEBUG("Error deleting timer\n");
+        return (OS_TIMER_ERR_INTERNAL);
+    }
 
-    //     local->assigned_signal = 0;
-    // }
-
-    // return OS_SUCCESS;
+    return OS_SUCCESS;
 } /* end OS_TimeBaseDelete_Impl */
 
 /*----------------------------------------------------------------
@@ -487,8 +368,14 @@ int32 OS_TimeBaseDelete_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_TimeBaseGetInfo_Impl(const OS_object_token_t *token, OS_timebase_prop_t *timer_prop)
 {
-    return OS_ERR_NOT_IMPLEMENTED;
-    // return OS_SUCCESS;
+    OS_impl_timebase_internal_record_t *local;
+
+    local = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    /* TODO figure out how to calc */
+    timer_prop->accuracy = 1000;
+    timer_prop->nominal_interval_time = local->interval_ms*1000;
+
+    return OS_SUCCESS;
 
 } /* end OS_TimeBaseGetInfo_Impl */
 
@@ -512,99 +399,94 @@ int32 OS_QT_TimeBaseAPI_Impl_Init(void)
     /* 1000 micro seconds per milisecond */
     OS_SharedGlobalVars.MicroSecPerTick = 1000;
 
-    return OS_SUCCESS;
-    // return OS_ERR_NOT_IMPLEMENTED;
-    // int                 status;
-    // osal_index_t        idx;
-    // // pthread_mutexattr_t mutex_attr;
+
+    osal_index_t        idx;
+    // pthread_mutexattr_t mutex_attr;
     // struct timespec     clock_resolution;
-    // int32               return_code;
+    int32               return_code;
 
-    // return_code = OS_SUCCESS;
+    return_code = OS_SUCCESS;
 
-    // do
+    // /* TODO
+    // ** get the resolution of the selected clock
+    // */
+    // status = clock_getres(OS_PREFERRED_CLOCK, &clock_resolution);
+    // if (status != 0)
     // {
-    //     /*
-    //     ** Mark all timers as available
-    //     */
-    //     memset(OS_impl_timebase_table, 0, sizeof(OS_impl_timebase_table));
+    //     OS_DEBUG("failed in clock_getres: %s\n", strerror(status));
+    //     return_code = OS_ERROR;
+    //     break;
+    // }
 
-    //     /*
-    //     ** get the resolution of the selected clock
-    //     */
-    //     status = clock_getres(OS_PREFERRED_CLOCK, &clock_resolution);
-    //     if (status != 0)
-    //     {
-    //         OS_DEBUG("failed in clock_getres: %s\n", strerror(status));
-    //         return_code = OS_ERROR;
-    //         break;
-    //     }
+    // /* 
+    // ** Convert to microseconds
+    // ** Note that the resolution MUST be in the sub-second range, if not then
+    // ** it looks like the POSIX timer API in the C library is broken.
+    // ** Note for any flavor of RTOS we would expect <= 1ms.  Even a "desktop"
+    // ** linux or development system should be <= 100ms absolute worst-case.
+    // */
+    // if (clock_resolution.tv_sec > 0)
+    // {
+    //     return_code = OS_TIMER_ERR_INTERNAL;
+    //     break;
+    // }
 
-    //     /*
-    //     ** Convert to microseconds
-    //     ** Note that the resolution MUST be in the sub-second range, if not then
-    //     ** it looks like the POSIX timer API in the C library is broken.
-    //     ** Note for any flavor of RTOS we would expect <= 1ms.  Even a "desktop"
-    //     ** linux or development system should be <= 100ms absolute worst-case.
-    //     */
-    //     if (clock_resolution.tv_sec > 0)
-    //     {
-    //         return_code = OS_TIMER_ERR_INTERNAL;
-    //         break;
-    //     }
+    /* Round to the nearest microsecond TODO obtain somehow */
+    /* The accuracy also depends on the timer type. For Qt::PreciseTimer, QTimer will try to keep the accuracy at 1 millisecond. Precise timers will also never time out earlier than expected.
+    */
+    QT_GlobalVars.ClockAccuracyNsec = 1e6; /* 1 milisecond */
+    /*
+    ** Allow the mutex to use priority inheritance
+    * TODO
+    */
+    // status = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    // if (status != 0)
+    // {
+    //     OS_DEBUG("Error: pthread_mutexattr_setprotocol failed: %s\n", strerror(status));
+    //     return_code = OS_ERROR;
+    //     break;
+    // }
 
-    //     /* Round to the nearest microsecond */
-    //     QT_GlobalVars.ClockAccuracyNsec = (uint32)(clock_resolution.tv_nsec);
+    for (idx = 0; idx < OS_MAX_TIMEBASES; ++idx)
+    {
+        /*
+        ** Mark all timers as available
+        */
 
-    //     /*
-    //     ** Allow the mutex to use priority inheritance
-    //     * TODO
-    //     */
-    //     // status = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
-    //     // if (status != 0)
-    //     // {
-    //     //     OS_DEBUG("Error: pthread_mutexattr_setprotocol failed: %s\n", strerror(status));
-    //     //     return_code = OS_ERROR;
-    //     //     break;
-    //     // }
+        // OS_impl_timebase_table[idx].handler_thread = 0x0;
+        OS_impl_timebase_table[idx].interval_ms = 1;
+        OS_impl_timebase_table[idx].name[0] = 0x0;
+        OS_impl_timebase_table[idx].reset_flag = 0x0;
+        OS_impl_timebase_table[idx].start_ms = 0;
+        /*
+        ** create the timebase sync mutex
+        ** This gives a mechanism to synchronize updates to the timer chain with the
+        ** expiration of the timer and processing the chain.
+        */
+        OS_impl_timebase_table[idx].handler_mutex.unlock();
 
-    //     // for (idx = 0; idx < OS_MAX_TIMEBASES; ++idx)
-    //     // {
-    //     //     /*
-    //     //     ** create the timebase sync mutex
-    //     //     ** This gives a mechanism to synchronize updates to the timer chain with the
-    //     //     ** expiration of the timer and processing the chain.
-    //     //     */
-    //     //     status = pthread_mutex_init(&OS_impl_timebase_table[idx].handler_mutex, &mutex_attr);
-    //     //     if (status != 0)
-    //     //     {
-    //     //         OS_DEBUG("Error: Mutex could not be created: %s\n", strerror(status));
-    //     //         return_code = OS_ERROR;
-    //     //         break;
-    //     //     }
-    //     // }
+    }
 
-    //     /*
-    //      * Pre-calculate the clock tick to microsecond conversion factor.
-    //      */
-    //     OS_SharedGlobalVars.TicksPerSecond = sysconf(_SC_CLK_TCK);
-    //     if (OS_SharedGlobalVars.TicksPerSecond <= 0)
-    //     {
-    //         OS_DEBUG("Error: Unable to determine OS ticks per second: %s\n", strerror(errno));
-    //         return_code = OS_ERROR;
-    //         break;
-    //     }
 
-    //     /*
-    //      * Calculate microseconds per tick
-    //      *  - If the ratio is not an integer, this will round to the nearest integer value
-    //      *  - This is used internally for reporting accuracy,
-    //      *  - TicksPerSecond values over 2M will return zero
-    //      */
-    //     OS_SharedGlobalVars.MicroSecPerTick = (1000000 + (OS_SharedGlobalVars.TicksPerSecond / 2)) /
-    //                                           OS_SharedGlobalVars.TicksPerSecond;
+    /*
+        * Pre-calculate the clock tick to microsecond conversion factor.
+        */
+    OS_SharedGlobalVars.TicksPerSecond = sysconf(_SC_CLK_TCK);
+    if (OS_SharedGlobalVars.TicksPerSecond <= 0)
+    {
+        OS_DEBUG("Error: Unable to determine OS ticks per second: %s\n", strerror(errno));
+        return_code = OS_ERROR;
+    }
 
-    // } while (0);
+    /*
+        * Calculate microseconds per tick
+        *  - If the ratio is not an integer, this will round to the nearest integer value
+        *  - This is used internally for reporting accuracy,
+        *  - TicksPerSecond values over 2M will return zero
+        */
+    OS_SharedGlobalVars.MicroSecPerTick = (1000000 + (OS_SharedGlobalVars.TicksPerSecond / 2)) /
+                                            OS_SharedGlobalVars.TicksPerSecond;
 
-    // return (return_code);
+
+    return (return_code);
 } /* end OS_QT_TimeBaseAPI_Impl_Init */

@@ -389,7 +389,9 @@ static inline OS_time_t OS_TimeAssembleFromSubseconds(int64 seconds, uint32 subs
  */
 static inline OS_time_t OS_TimeAdd(OS_time_t time1, OS_time_t time2)
 {
-    return ((OS_time_t) {time1.ticks + time2.ticks});
+    OS_time_t ret;
+    ret.ticks = time1.ticks + time2.ticks;
+    return ret;
 }
 
 /*-------------------------------------------------------------------------------------*/
@@ -403,7 +405,9 @@ static inline OS_time_t OS_TimeAdd(OS_time_t time1, OS_time_t time2)
  */
 static inline OS_time_t OS_TimeSubtract(OS_time_t time1, OS_time_t time2)
 {
-    return ((OS_time_t) {time1.ticks - time2.ticks});
+    OS_time_t ret;
+    ret.ticks = time1.ticks - time2.ticks;
+    return ret;
 }
 
 /**@}*/

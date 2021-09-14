@@ -168,7 +168,7 @@ int32 OS_TaskCreate_Impl(const OS_object_token_t *token, uint32 flags)
 int32 OS_TaskDetach_Impl(const OS_object_token_t *token)
 {
     OS_impl_task_internal_record_t *impl;
-    int                             ret;
+    // int                             ret;
 
     impl = OS_OBJECT_TABLE_GET(OS_impl_task_table, *token);
 
@@ -302,7 +302,7 @@ int32 OS_TaskDelay_Impl(uint32 millisecond)
 int32 OS_TaskSetPriority_Impl(const OS_object_token_t *token, osal_priority_t new_priority)
 {
     int os_priority;
-    int ret;
+    // int ret;
 
     OS_impl_task_internal_record_t *impl;
 
@@ -334,7 +334,7 @@ int32 OS_TaskSetPriority_Impl(const OS_object_token_t *token, osal_priority_t ne
  *-----------------------------------------------------------------*/
 int32 OS_TaskRegister_Impl(osal_id_t global_task_id)
 {
-    int32                return_code;
+    // int32                return_code;
     // OS_U32ValueWrapper_t arg;
 
     // arg.opaque_arg = 0;
@@ -438,7 +438,7 @@ int32 OS_TaskValidateSystemData_Impl(const void *sysdata, size_t sysdata_size)
 
 }
 
-
+#if 0 /*TODO */
 /*---------------------------------------------------------------------------------------
    Name: OS_QT_GetSchedulerParams
 
@@ -493,6 +493,7 @@ static bool OS_QT_GetSchedulerParams(int sched_policy, QT_PriorityLimits_t *PriL
              (int)PriLim->PriorityMax);
     return true;
 } /* end OS_QT_GetSchedulerParams */
+#endif
 
 /*
  *********************************************************************************
@@ -509,14 +510,17 @@ static bool OS_QT_GetSchedulerParams(int sched_policy, QT_PriorityLimits_t *PriL
 int32 OS_QT_TaskAPI_Impl_Init(void)
 {
     int                    ret;
+
+    QT_PriorityLimits_t sched_fifo_limits;
+    QT_PriorityLimits_t sched_rr_limits;
+
+    #if 0 /* todo */
     int                    sig;
     struct sched_param     sched_param;
-    int                    sched_policy;
-    QT_PriorityLimits_t sched_fifo_limits;
     bool                   sched_fifo_valid;
-    QT_PriorityLimits_t sched_rr_limits;
+    int                    sched_policy;
     bool                   sched_rr_valid;
-
+    #endif
     /* Initialize Local Tables */
     memset(OS_impl_task_table, 0, sizeof(OS_impl_task_table));
 
@@ -615,7 +619,7 @@ int32 OS_QT_TaskAPI_Impl_Init(void)
     ret = -1;
     if (ret == 0)
     {
-        #if 0
+        #if 0 /* TODO */
         QT_GlobalVars.SelectedRtScheduler = sched_policy; /* Fallback/default */
         do
         {

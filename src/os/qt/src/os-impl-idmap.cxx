@@ -89,7 +89,7 @@ extern "C" {
 void OS_Lock_Global_Impl(osal_objtype_t idtype)
 {
     QT_GlobalLock_t *mut;
-    sigset_t            previous;
+    // sigset_t            previous;
 
     mut = MUTEX_TABLE[idtype];
 
@@ -124,7 +124,7 @@ void OS_Lock_Global_Impl(osal_objtype_t idtype)
 void OS_Unlock_Global_Impl(osal_objtype_t idtype)
 {
     QT_GlobalLock_t *mut;
-    sigset_t            previous;
+    // sigset_t            previous;
 
     if (idtype < MUTEX_TABLE_SIZE)
     {
@@ -163,7 +163,7 @@ void OS_Unlock_Global_Impl(osal_objtype_t idtype)
 void OS_WaitForStateChange_Impl(osal_objtype_t idtype, uint32 attempts)
 {
     QT_GlobalLock_t *mut;
-    sigset_t previous;
+    // sigset_t previous;
 
     mut = MUTEX_TABLE[idtype];
 
@@ -188,7 +188,7 @@ void OS_WaitForStateChange_Impl(osal_objtype_t idtype, uint32 attempts)
 ---------------------------------------------------------------------------------------*/
 int32 OS_QT_TableMutex_Init(osal_objtype_t idtype)
 {
-    int                 ret;
+    // int                 ret;
     int32               return_code = OS_SUCCESS;
 
     do
