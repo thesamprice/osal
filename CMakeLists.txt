@@ -85,7 +85,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
 set(OSAL_API_INCLUDE_DIRECTORIES
     "${OSAL_SOURCE_DIR}/src/os/inc"
     "${CMAKE_BINARY_DIR}/inc"
-    "${QT_INCLUDES}")
+)
 include_directories(${OSAL_API_INCLUDE_DIRECTORIES})
 
 # In case the OSAL_USER_C_FLAGS was specified, use them
