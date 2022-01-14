@@ -259,9 +259,9 @@ int32 OS_Posix_TimeBaseAPI_Impl_Init(void)
         }
 
         /*
-        ** Allow the mutex to use priority inheritance
+        ** Do not use priority inheritance
         */
-        status = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+        status = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_NONE);
         if (status != 0)
         {
             OS_DEBUG("Error: pthread_mutexattr_setprotocol failed: %s\n", strerror(status));

@@ -82,9 +82,9 @@ int32 OS_MutSemCreate_Impl(const OS_object_token_t *token, uint32 options)
     }
 
     /*
-    ** Allow the mutex to use priority inheritance
+    ** Do not use priority inheritance
     */
-    return_code = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    return_code = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_NONE);
     if (return_code != 0)
     {
         OS_DEBUG("Error: Mutex could not be created. pthread_mutexattr_setprotocol failed ID = %lu: %s\n",

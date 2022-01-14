@@ -162,9 +162,9 @@ int32 OS_BinSemCreate_Impl(const OS_object_token_t *token, uint32 initial_value,
         attr_created = 1;
 
         /*
-         ** Use priority inheritance
+         ** Do not use priority inheritance
          */
-        ret = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+        ret = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_NONE);
         if (ret != 0)
         {
             OS_DEBUG("Error: pthread_mutexattr_setprotocol failed: %s\n", strerror(ret));
