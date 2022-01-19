@@ -79,13 +79,13 @@ void OS_BSP_Initialize(void)
         }
     }
 
-    /* Initialize the low level access mutex (w/priority inheritance) */
+    /* Initialize the low level access mutex (do not use priority inheritance) */
     status = pthread_mutexattr_init(&mutex_attr);
     if (status < 0)
     {
         BSP_DEBUG("pthread_mutexattr_init: %s\n", strerror(status));
     }
-    status = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    status = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_NONE);
     if (status < 0)
     {
         BSP_DEBUG("pthread_mutexattr_setprotocol: %s\n", strerror(status));

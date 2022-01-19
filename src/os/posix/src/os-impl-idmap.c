@@ -207,9 +207,9 @@ int32 OS_Posix_TableMutex_Init(osal_objtype_t idtype)
         }
 
         /*
-         * Allow the mutex to use priority inheritance
+         * Do not use priority inheritance
          */
-        ret = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+        ret = pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_NONE);
         if (ret != 0)
         {
             OS_DEBUG("Error: pthread_mutexattr_setprotocol failed: %s\n", strerror(ret));
