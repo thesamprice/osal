@@ -59,7 +59,7 @@ char g_dirName[UT_OS_PATH_BUFF_SIZE];
 char g_fileName[UT_OS_PATH_BUFF_SIZE];
 
 char        g_subdirNames[UT_OS_FILE_MAX_DIRS][UT_OS_PATH_BUFF_SIZE];
-const char *g_tgtSubdirs[UT_OS_FILE_NUM_DIR_ENTRIES] = {"subdir1", "subdir2"};
+const char *g_tgtSubdirs[UT_OS_FILE_NUM_DIR_ENTRIES] = {"sdir1", "sdir2"};
 
 typedef struct
 {
@@ -147,11 +147,11 @@ void UT_os_makedir_test()
     /* #5 Nominal */
 
     memset(g_dirName, '\0', sizeof(g_dirName));
-    UT_os_sprintf(g_dirName, "%s/mkdir_Nominal", g_mntName);
+    UT_os_sprintf(g_dirName, "%s/mkdir_Nom", g_mntName);
     UT_NOMINAL(OS_mkdir(g_dirName, OS_READ_WRITE));
 
     memset(g_fileName, '\0', sizeof(g_fileName));
-    UT_os_sprintf(g_fileName, "%s/mkdir_File.txt", g_dirName);
+    UT_os_sprintf(g_fileName, "%s/mkdir_F.txt", g_dirName);
     UT_NOMINAL(OS_OpenCreate(&fileDesc, g_fileName, OS_FILE_FLAG_CREATE | OS_FILE_FLAG_TRUNCATE, OS_READ_WRITE));
 
     /* Reset test environment */
@@ -234,7 +234,7 @@ void UT_os_opendir_test()
     UT_os_sprintf(g_dirName, "%s/notexist", g_mntName);
     UT_RETVAL(OS_DirectoryOpen(&dirh, g_dirName), OS_ERROR);
 
-    UT_os_sprintf(g_dirName, "%s/opendir_Nominal", g_mntName);
+    UT_os_sprintf(g_dirName, "%s/opendir_Nom", g_mntName);
     if (UT_SETUP(OS_mkdir(g_dirName, OS_READ_WRITE)))
     {
         UT_NOMINAL(OS_DirectoryOpen(&dirh, g_dirName));
@@ -365,7 +365,7 @@ void UT_os_readdir_test()
     /* #3 Nominal */
 
     memset(g_dirName, '\0', sizeof(g_dirName));
-    UT_os_sprintf(g_dirName, "%s/readdir_Nominal", g_mntName);
+    UT_os_sprintf(g_dirName, "%s/readdir_Nom", g_mntName);
     if (UT_SETUP(OS_mkdir(g_dirName, OS_READ_WRITE)))
     {
         memset(g_subdirNames[0], '\0', sizeof(g_subdirNames[0]));
@@ -457,7 +457,7 @@ void UT_os_rewinddir_test()
     /* #2 Nominal */
 
     memset(g_dirName, '\0', sizeof(g_dirName));
-    UT_os_sprintf(g_dirName, "%s/rewinddir_Nominal", g_mntName);
+    UT_os_sprintf(g_dirName, "%s/rewinddir_Nom", g_mntName);
     if (UT_SETUP(OS_mkdir(g_dirName, OS_READ_WRITE)))
     {
         memset(g_subdirNames[0], '\0', sizeof(g_subdirNames[0]));
@@ -566,11 +566,11 @@ void UT_os_removedir_test()
     /* #5 Nominal */
 
     memset(g_dirName, '\0', sizeof(g_dirName));
-    UT_os_sprintf(g_dirName, "%s/rmdir_Nominal", g_mntName);
+    UT_os_sprintf(g_dirName, "%s/rmdir_Nom", g_mntName);
     if (UT_SETUP(OS_mkdir(g_dirName, OS_READ_WRITE)))
     {
         memset(g_fileName, '\0', sizeof(g_fileName));
-        UT_os_sprintf(g_fileName, "%s/rmdir_File1.txt", g_dirName);
+        UT_os_sprintf(g_fileName, "%s/rmdir_F1.txt", g_dirName);
         if (UT_SETUP(OS_OpenCreate(&fileDesc, g_fileName, OS_FILE_FLAG_CREATE | OS_FILE_FLAG_TRUNCATE, OS_READ_WRITE)))
         {
             UT_RETVAL(OS_rmdir(g_dirName), OS_ERROR);
@@ -582,7 +582,7 @@ void UT_os_removedir_test()
             UT_NOMINAL(OS_rmdir(g_dirName));
 
             memset(g_fileName, '\0', sizeof(g_fileName));
-            UT_os_sprintf(g_fileName, "%s/rmdir_File2.txt", g_dirName);
+            UT_os_sprintf(g_fileName, "%s/rmdir_F2.txt", g_dirName);
             UT_RETVAL(OS_OpenCreate(&fileDesc, g_fileName, OS_FILE_FLAG_CREATE | OS_FILE_FLAG_TRUNCATE, OS_READ_WRITE),
                       OS_ERROR);
         }
