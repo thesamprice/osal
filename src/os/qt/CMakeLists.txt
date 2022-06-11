@@ -5,7 +5,7 @@
 ######################################################################
 
 enable_language(CXX)
-set(Qt5Core_DIR "/Users/sprice5/Qt/5.15.2/clang_64/lib/cmake/Qt5Core/")
+#set(Qt5Core_DIR "/Users/sprice5/Qt/5.15.2/clang_64/lib/cmake/Qt5Core/")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -64,7 +64,7 @@ find_package(Qt5 COMPONENTS Core )
 include_directories(osal_qt_impl 
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
    PUBLIC
-   /Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
+#   /Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
 #    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/
 
 
@@ -72,7 +72,7 @@ include_directories(osal_qt_impl
 
 include_directories(osal 
 PUBLIC
-/Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
+#/Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
 )
 
 
@@ -178,5 +178,3 @@ target_link_libraries(osal_qt_impl
 
 #enable_language(CXX)
 # target_compile_features(osal_qt_impl PRIVATE cxx_std_17)
-
-

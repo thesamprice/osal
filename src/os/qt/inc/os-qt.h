@@ -32,7 +32,7 @@
  */
 #include <os-shared-globaldefs.h>
 
-#include "QtCore"
+#include <QtCore>
 
 /****************************************************************************************
                                      DEFINES

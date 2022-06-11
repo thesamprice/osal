@@ -7,7 +7,7 @@
 #
 # The "ut_assert" library is the core GSFC-provided unit test library
 #
-project(UT_ASSERT C)
+project(UT_ASSERT C CXX)
 
 # The "ut_assert" library is usable by ANY and ALL subsystem(s) that need
 # to do unit testing of any kind.  This library implements an OSAL application

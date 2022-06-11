@@ -16,7 +16,7 @@
 #
 
 cmake_minimum_required(VERSION 2.6.4)
-project(OSALCOVERAGE C)
+project(OSALCOVERAGE C CXX)
 
 # Ask to generate a "make test" target
 enable_testing()
