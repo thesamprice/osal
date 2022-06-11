@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-symtab.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -33,18 +31,18 @@
 #include "OCS_fcntl.h"
 #include "OCS_symLib.h"
 
-void Test_OS_GlobalSymbolLookup_Impl(void)
+void Test_OS_SymbolLookup_Impl(void)
 {
     /* Test Case For:
-     * int32 OS_GlobalSymbolLookup_Impl( cpuaddr *SymbolAddress, const char *SymbolName )
+     * int32 OS_SymbolLookup_Impl( cpuaddr *SymbolAddress, const char *SymbolName )
      */
     cpuaddr SymAddr;
 
-    OSAPI_TEST_FUNCTION_RC(OS_GlobalSymbolLookup_Impl(&SymAddr, "symname"), OS_SUCCESS);
-    OSAPI_TEST_FUNCTION_RC(OS_GlobalSymbolLookup_Impl(NULL, "symname"), OS_INVALID_POINTER);
-    OSAPI_TEST_FUNCTION_RC(OS_GlobalSymbolLookup_Impl(&SymAddr, NULL), OS_INVALID_POINTER);
+    OSAPI_TEST_FUNCTION_RC(OS_SymbolLookup_Impl(&SymAddr, "symname"), OS_SUCCESS);
+    OSAPI_TEST_FUNCTION_RC(OS_SymbolLookup_Impl(NULL, "symname"), OS_INVALID_POINTER);
+    OSAPI_TEST_FUNCTION_RC(OS_SymbolLookup_Impl(&SymAddr, NULL), OS_INVALID_POINTER);
     UT_SetDefaultReturnValue(UT_KEY(OCS_symFind), OCS_ERROR);
-    OSAPI_TEST_FUNCTION_RC(OS_GlobalSymbolLookup_Impl(&SymAddr, "symname"), OS_ERROR);
+    OSAPI_TEST_FUNCTION_RC(OS_SymbolLookup_Impl(&SymAddr, "symname"), OS_ERROR);
 }
 
 void Test_OS_ModuleSymbolLookup_Impl(void)
@@ -144,7 +142,7 @@ void Osapi_Test_Teardown(void) {}
 void UtTest_Setup(void)
 {
     ADD_TEST(OS_SymTableIterator_Impl);
-    ADD_TEST(OS_GlobalSymbolLookup_Impl);
+    ADD_TEST(OS_SymbolLookup_Impl);
     ADD_TEST(OS_ModuleSymbolLookup_Impl);
     ADD_TEST(OS_SymbolTableDump_Impl);
 }

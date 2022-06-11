@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*
 ** Binary Semaphore Flush Test
@@ -61,6 +59,8 @@ void task_1(void)
     OS_bin_sem_prop_t bin_sem_prop;
     int               counter = 0;
 
+    memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
+
     OS_printf("Starting task 1\n");
 
     OS_printf("TASK 1: Waiting on the semaphore\n");
@@ -97,6 +97,8 @@ void task_2(void)
     uint32            status;
     OS_bin_sem_prop_t bin_sem_prop;
     int               counter = 0;
+
+    memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
 
     task_2_failures = 0;
     OS_printf("Starting task 2\n");
@@ -135,6 +137,8 @@ void task_3(void)
     uint32            status;
     OS_bin_sem_prop_t bin_sem_prop;
     int               counter = 0;
+
+    memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
 
     OS_printf("Starting task 3\n");
 
@@ -190,6 +194,8 @@ void BinSemFlushSetup(void)
 {
     uint32            status;
     OS_bin_sem_prop_t bin_sem_prop;
+
+    memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
 
     /* Note that UT assert is not multi-thread safe,
      * so each thread must use a separate error counter

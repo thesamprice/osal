@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \brief Coverage test for no network implementation
@@ -100,21 +98,34 @@ void Test_OS_SocketOpen_Impl(void)
     OS_stream_table[0].socket_type   = OS_SocketType_STREAM;
     OS_stream_table[0].socket_domain = OS_SocketDomain_INET6;
     OSAPI_TEST_FUNCTION_RC(OS_SocketOpen_Impl, (&token), OS_SUCCESS);
-    UtAssert_True(UT_PortablePosixIOTest_Get_Selectable(token.obj_idx), "Socket is selectable");
+}
+
+void Test_OS_SetSocketDefaultFlags_Impl(void)
+{
+    OS_object_token_t token = {0};
 
     /* Failure in fcntl() GETFL */
     UT_PortablePosixIOTest_ResetImpl(token.obj_idx);
     UT_ResetState(UT_KEY(OCS_fcntl));
     UT_SetDeferredRetcode(UT_KEY(OCS_fcntl), 1, -1);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketOpen_Impl, (&token), OS_SUCCESS);
+    UtAssert_VOIDCALL(OS_SetSocketDefaultFlags_Impl(&token));
     UtAssert_STUB_COUNT(OCS_fcntl, 1);
+    UtAssert_True(UT_PortablePosixIOTest_Get_Selectable(token.obj_idx), "Socket is selectable");
 
     /* Failure in fcntl() SETFL */
     UT_PortablePosixIOTest_ResetImpl(token.obj_idx);
     UT_ResetState(UT_KEY(OCS_fcntl));
     UT_SetDeferredRetcode(UT_KEY(OCS_fcntl), 2, -1);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketOpen_Impl, (&token), OS_SUCCESS);
+    UtAssert_VOIDCALL(OS_SetSocketDefaultFlags_Impl(&token));
     UtAssert_STUB_COUNT(OCS_fcntl, 2);
+    UtAssert_True(UT_PortablePosixIOTest_Get_Selectable(token.obj_idx), "Socket is selectable");
+
+    /* Nominal path */
+    UT_PortablePosixIOTest_ResetImpl(token.obj_idx);
+    UT_ResetState(UT_KEY(OCS_fcntl));
+    UtAssert_VOIDCALL(OS_SetSocketDefaultFlags_Impl(&token));
+    UtAssert_STUB_COUNT(OCS_fcntl, 2);
+    UtAssert_True(UT_PortablePosixIOTest_Get_Selectable(token.obj_idx), "Socket is selectable");
 }
 
 void Test_OS_SocketBind_Impl(void)
@@ -168,7 +179,7 @@ void Test_OS_SocketConnect_Impl(void)
     addr.ActualLength = sizeof(struct OCS_sockaddr_in);
     OSAPI_TEST_FUNCTION_RC(OS_SocketConnect_Impl, (&token, &addr, 0), OS_ERR_BAD_ADDRESS);
 
-    /* Sucessful connect */
+    /* Successful connect */
     sa->sa_family = OCS_AF_INET;
     OSAPI_TEST_FUNCTION_RC(OS_SocketConnect_Impl, (&token, &addr, 0), OS_SUCCESS);
 
@@ -185,7 +196,7 @@ void Test_OS_SocketConnect_Impl(void)
     UT_SetDeferredRetcode(UT_KEY(OS_SelectSingle_Impl), 1, UT_ERR_UNIQUE);
     OSAPI_TEST_FUNCTION_RC(OS_SocketConnect_Impl, (&token, &addr, 0), UT_ERR_UNIQUE);
 
-    /* Timout error by clearing select flags with hook */
+    /* Timeout error by clearing select flags with hook */
     selectflags = 0;
     UT_SetHookFunction(UT_KEY(OS_SelectSingle_Impl), UT_Hook_OS_SelectSingle_Impl, &selectflags);
     OSAPI_TEST_FUNCTION_RC(OS_SocketConnect_Impl, (&token, &addr, 0), OS_ERROR_TIMEOUT);
@@ -255,20 +266,6 @@ void Test_OS_SocketAccept_Impl(void)
 
     /* Success case */
     OSAPI_TEST_FUNCTION_RC(OS_SocketAccept_Impl, (&sock_token, &conn_token, &addr, 0), OS_SUCCESS);
-
-    /* Failure in fcntl() GETFL */
-    UT_PortablePosixIOTest_ResetImpl(conn_token.obj_idx);
-    UT_ResetState(UT_KEY(OCS_fcntl));
-    UT_SetDeferredRetcode(UT_KEY(OCS_fcntl), 1, -1);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketAccept_Impl, (&sock_token, &conn_token, &addr, 0), OS_SUCCESS);
-    UtAssert_STUB_COUNT(OCS_fcntl, 1);
-
-    /* Failure in fcntl() SETFL */
-    UT_PortablePosixIOTest_ResetImpl(conn_token.obj_idx);
-    UT_ResetState(UT_KEY(OCS_fcntl));
-    UT_SetDeferredRetcode(UT_KEY(OCS_fcntl), 2, -1);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketAccept_Impl, (&sock_token, &conn_token, &addr, 0), OS_SUCCESS);
-    UtAssert_STUB_COUNT(OCS_fcntl, 2);
 }
 
 void Test_OS_SocketRecvFrom_Impl(void)
@@ -317,15 +314,15 @@ void Test_OS_SocketRecvFrom_Impl(void)
 
 void Test_OS_SocketSendTo_Impl(void)
 {
-    OS_object_token_t    token = {0};
-    uint8                buffer[UT_BUFFER_SIZE];
-    OS_SockAddr_t        addr = {0};
-    struct OCS_sockaddr *sa   = (struct OCS_sockaddr *)&addr.AddrData;
+    OS_object_token_t    token                  = {0};
+    const uint8          buffer[UT_BUFFER_SIZE] = {0};
+    OS_SockAddr_t        addr                   = {0};
+    struct OCS_sockaddr *sa                     = (struct OCS_sockaddr *)&addr.AddrData;
 
     /* Set up token */
     token.obj_idx = UT_INDEX_0;
 
-    /* Bad adderss length */
+    /* Bad address length */
     sa->sa_family     = -1;
     addr.ActualLength = sizeof(struct OCS_sockaddr_in);
     OSAPI_TEST_FUNCTION_RC(OS_SocketSendTo_Impl, (&token, buffer, sizeof(buffer), &addr), OS_ERR_BAD_ADDRESS);
@@ -394,9 +391,9 @@ void Test_OS_SocketAddrToString_Impl(void)
 
 void Test_OS_SocketAddrFromString_Impl(void)
 {
-    char                 buffer[UT_BUFFER_SIZE];
-    OS_SockAddr_t        addr = {0};
-    struct OCS_sockaddr *sa   = (struct OCS_sockaddr *)&addr.AddrData;
+    const char           buffer[UT_BUFFER_SIZE] = "UT";
+    OS_SockAddr_t        addr                   = {0};
+    struct OCS_sockaddr *sa                     = (struct OCS_sockaddr *)&addr.AddrData;
 
     /* Bad family */
     sa->sa_family = -1;
@@ -484,6 +481,7 @@ void Osapi_Test_Teardown(void) {}
 void UtTest_Setup(void)
 {
     ADD_TEST(OS_SocketOpen_Impl);
+    ADD_TEST(OS_SetSocketDefaultFlags_Impl);
     ADD_TEST(OS_SocketBind_Impl);
     ADD_TEST(OS_SocketConnect_Impl);
     ADD_TEST(OS_SocketShutdown_Impl);

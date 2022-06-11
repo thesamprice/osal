@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -67,7 +65,8 @@ void UT_BSP_Setup(void);
  *
  * This is just a hook for the BSP to be informed of the start-of-test event and may be a no-op.
  *
- * \param Appname Name of current test segment
+ * \param[in] SegmentNumber Number of current test segment
+ * \param[in] SegmentName   Name of current test segment
  */
 void UT_BSP_StartTestSegment(uint32 SegmentNumber, const char *SegmentName);
 
@@ -89,7 +88,7 @@ void UT_BSP_DoText(uint8 MessageType, const char *OutputMessage);
 /**
  * The BSP overall test end function.
  *
- * Invokes the BSP-specific global pass/fail reporting mechanism based the global overall pass/fail counters.
+ * Invokes the BSP-specific global pass/fail reporting mechanism based on the global overall pass/fail counters.
  *
  * This function ends the current test process and returns to the controlling process.
  *

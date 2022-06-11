@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*================================================================================*
 ** File:  ut_osfile_fileio_test.c
@@ -880,8 +878,12 @@ void UT_os_chmodfile_test()
 **--------------------------------------------------------------------------------*/
 void UT_os_statfile_test()
 {
-    os_fstat_t fstats1, fstats2;
+    os_fstat_t fstats1;
+    os_fstat_t fstats2;
     size_t     expected_len;
+
+    memset(&fstats1, 0, sizeof(fstats1));
+    memset(&fstats2, 0, sizeof(fstats2));
 
     /*-----------------------------------------------------*/
     /* #1 Null-pointer-arg */
@@ -1257,7 +1259,7 @@ void UT_os_copyfile_test()
 ** Syntax: int32 OS_mv(const char *src, const char *dest)
 ** Purpose: Moves the given file to a new specified file
 ** Parameters: *src - pointer to the absolute path of the file to be moved
-**             *dest - pointer to the aboslute path of the new file
+**             *dest - pointer to the absolute path of the new file
 ** Returns: OS_INVALID_POINTER if any of the pointers passed in is null
 **          OS_FS_ERR_INVALID_PATH if path is invalid
 **          OS_FS_ERR_PATH_TOO_LONG if the path name is too long

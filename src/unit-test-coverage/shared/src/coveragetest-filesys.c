@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-filesys.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -262,6 +260,8 @@ void Test_OS_FileSysStatVolume(void)
     int32        expected;
     int32        actual;
 
+    memset(&statbuf, 0, sizeof(statbuf));
+
     statref.block_size   = OSAL_SIZE_C(1024);
     statref.blocks_free  = OSAL_BLOCKCOUNT_C(1111);
     statref.total_blocks = OSAL_BLOCKCOUNT_C(2222);
@@ -376,6 +376,8 @@ void Test_OS_GetFsInfo(void)
     os_fsinfo_t        filesys_info;
     OS_common_record_t rec;
 
+    memset(&filesys_info, 0, sizeof(filesys_info));
+
     UT_SetDefaultReturnValue(UT_KEY(OS_ObjectIdIteratorGetNext), 1);
     UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdIteratorGetNext), 3, 0);
     UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdIteratorGetNext), 4, 0);
@@ -416,6 +418,8 @@ void Test_OS_TranslatePath(void)
     char  LocalBuffer[OS_MAX_PATH_LEN];
     int32 expected = OS_SUCCESS;
     int32 actual   = ~OS_SUCCESS;
+
+    memset(LocalBuffer, 0, sizeof(LocalBuffer));
 
     /* Set up the local record for success */
     OS_filesys_table[1].flags =

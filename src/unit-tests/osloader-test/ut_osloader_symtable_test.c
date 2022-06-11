@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*================================================================================*
 ** File:  ut_osloader_symtable_test.c
@@ -38,7 +36,7 @@
 /**
  * The size limit to pass for OS_SymbolTableDump nominal test
  *
- * This must be large enough to actually accomodate all of the symbols
+ * This must be large enough to actually accommodate all of the symbols
  * in the target system.
  */
 #define UT_SYMTABLE_SIZE_LIMIT 1048576
@@ -75,7 +73,7 @@
 void UT_os_symbol_lookup_test()
 {
     cpuaddr   symbol_addr;
-    osal_id_t module_id;
+    osal_id_t module_id = OS_OBJECT_ID_UNDEFINED;
 
     /*-----------------------------------------------------*/
     /* API Not implemented */
@@ -96,7 +94,7 @@ void UT_os_symbol_lookup_test()
     UT_RETVAL(OS_SymbolLookup(&symbol_addr, 0), OS_INVALID_POINTER);
 
     /*-----------------------------------------------------*/
-    /* Setup for remainder of tests */
+    /* Setup for global symbol test */
     if (UT_SETUP(OS_ModuleLoad(&module_id, "Mod1", UT_OS_GENERIC_MODULE_NAME2, OS_MODULE_FLAG_GLOBAL_SYMBOLS)))
     {
         /*-----------------------------------------------------*/
@@ -106,6 +104,19 @@ void UT_os_symbol_lookup_test()
 
         /*-----------------------------------------------------*/
         /* #4 Nominal, Global Symbols */
+
+        UT_NOMINAL(OS_SymbolLookup(&symbol_addr, "module1"));
+
+        /* Reset test environment */
+        UT_TEARDOWN(OS_ModuleUnload(module_id));
+    }
+
+    /*-----------------------------------------------------*/
+    /* Setup for local symbol test */
+    if (UT_SETUP(OS_ModuleLoad(&module_id, "Mod1", UT_OS_GENERIC_MODULE_NAME2, OS_MODULE_FLAG_LOCAL_SYMBOLS)))
+    {
+        /*-----------------------------------------------------*/
+        /* #5 Nominal, Local Symbols */
 
         UT_NOMINAL(OS_SymbolLookup(&symbol_addr, "module1"));
 
@@ -126,7 +137,7 @@ void UT_os_symbol_lookup_test()
 void UT_os_module_symbol_lookup_test()
 {
     cpuaddr   symbol_addr;
-    osal_id_t module_id;
+    osal_id_t module_id = OS_OBJECT_ID_UNDEFINED;
 
     /*-----------------------------------------------------*/
     /* API Not implemented */
@@ -177,6 +188,7 @@ void UT_os_module_symbol_lookup_test()
 **--------------------------------------------------------------------------------*/
 void UT_os_symbol_table_dump_test()
 {
+    int32 status;
     /*
      * Note that even if the functionality is not implemented,
      * the API still validates the input pointers (not null) and
@@ -196,7 +208,25 @@ void UT_os_symbol_table_dump_test()
     /*-----------------------------------------------------*/
     /* #3 Nominal */
 
-    if (UT_NOMINAL_OR_NOTIMPL(OS_SymbolTableDump(UT_OS_GENERIC_MODULE_DIR "SymbolReal.dat", UT_SYMTABLE_SIZE_LIMIT)))
+    status = OS_SymbolTableDump(UT_OS_GENERIC_MODULE_DIR "SymbolReal.dat", UT_SYMTABLE_SIZE_LIMIT);
+    if (status == OS_ERR_NOT_IMPLEMENTED)
+    {
+        UtAssert_NA("OS_SymbolTableDump API not implemented");
+    }
+    else if (status == OS_ERR_OUTPUT_TOO_LARGE)
+    {
+        UtAssert_MIR("UT_SYMTABLE_SIZE_LIMIT too small for OS_SymbolTableDump");
+    }
+    else if (status == OS_ERR_NAME_TOO_LONG)
+    {
+        UtAssert_MIR("OSAL_CONFIG_MAX_SYM_LEN too small for OS_SymbolTableDump");
+    }
+    else
+    {
+        UtAssert_True(status == OS_SUCCESS, "status after 128k OS_SymbolTableDump = %d", (int)status);
+    }
+
+    if (status == OS_SUCCESS)
     {
         UT_RETVAL(OS_SymbolTableDump(UT_OS_GENERIC_MODULE_DIR "SymbolZero.dat", 0), OS_ERR_OUTPUT_TOO_LARGE);
     }

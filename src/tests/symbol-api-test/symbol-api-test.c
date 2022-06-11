@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
@@ -32,9 +30,8 @@
 
 void TestSymbolApi(void)
 {
-#ifdef OS_INCLUDE_MODULE_LOADER
     int32   status;
-    cpuaddr SymAddress;
+    cpuaddr SymAddress = 0;
 
     /* Make the file system */
     status = OS_mkfs(0, "/ramdev0", "RAM", 512, 2048);
@@ -50,7 +47,15 @@ void TestSymbolApi(void)
     status = OS_SymbolTableDump("/ram/SymbolTable32k.dat", 32768);
     if (status == OS_ERR_NOT_IMPLEMENTED)
     {
-        UtAssert_NA("Module API not implemented");
+        UtAssert_NA("OS_SymbolTableDump API not implemented");
+    }
+    else if (status == OS_ERR_OUTPUT_TOO_LARGE)
+    {
+        UtAssert_MIR("32k too small for OS_SymbolTableDump");
+    }
+    else if (status == OS_ERR_NAME_TOO_LONG)
+    {
+        UtAssert_MIR("OS_SymbolTableDump name to long, consider increasing OSAL_CONFIG_MAX_SYM_LEN");
     }
     else
     {
@@ -64,7 +69,15 @@ void TestSymbolApi(void)
     status = OS_SymbolTableDump("/ram/SymbolTable128k.dat", 131072);
     if (status == OS_ERR_NOT_IMPLEMENTED)
     {
-        UtAssert_NA("Module API not implemented");
+        UtAssert_NA("OS_SymbolTableDump API not implemented");
+    }
+    else if (status == OS_ERR_OUTPUT_TOO_LARGE)
+    {
+        UtAssert_MIR("128k too small for OS_SymbolTableDump");
+    }
+    else if (status == OS_ERR_NAME_TOO_LONG)
+    {
+        UtAssert_MIR("OS_SymbolTableDump name to long, consider increasing OSAL_CONFIG_MAX_SYM_LEN");
     }
     else
     {
@@ -78,7 +91,15 @@ void TestSymbolApi(void)
     status = OS_SymbolTableDump("/ram/SymbolTable512k.dat", 524288);
     if (status == OS_ERR_NOT_IMPLEMENTED)
     {
-        UtAssert_NA("Module API not implemented");
+        UtAssert_NA("OS_SymbolTableDump API not implemented");
+    }
+    else if (status == OS_ERR_OUTPUT_TOO_LARGE)
+    {
+        UtAssert_MIR("512k too small for OS_SymbolTableDump");
+    }
+    else if (status == OS_ERR_NAME_TOO_LONG)
+    {
+        UtAssert_MIR("OS_SymbolTableDump name to long, consider increasing OSAL_CONFIG_MAX_SYM_LEN");
     }
     else
     {
@@ -89,20 +110,29 @@ void TestSymbolApi(void)
     ** Test the symbol lookup
     */
     status = OS_SymbolLookup(&SymAddress, "OS_Application_Startup");
-    UtAssert_True(status == OS_SUCCESS, "OS_SymbolLookup(OS_Application_Startup) = %d, Addr = %lx", (int)status,
-                  (unsigned long)SymAddress);
+    if (status == OS_ERR_NOT_IMPLEMENTED)
+    {
+        UtAssert_NA("OS_SymbolLookup API not implemented");
+    }
+    else
+    {
+        UtAssert_True(status == OS_SUCCESS, "OS_SymbolLookup(OS_Application_Startup) = %d, Addr = %lx", (int)status,
+                      (unsigned long)SymAddress);
+    }
 
     /*
     ** Test a symbol lookup that does not exist
     */
     status = OS_SymbolLookup(&SymAddress, "ShouldNotExist");
-    UtAssert_True(status != OS_SUCCESS, "OS_SymbolLookup(ShouldNotExist) = %d, Addr = %lx", (int)status,
-                  (unsigned long)SymAddress);
-
-#else
-    /* If the module loader is not present, generate an N/A test case just to indicate that the test ran */
-    UtAssert_True(1, "Module loader not present");
-#endif
+    if (status == OS_ERR_NOT_IMPLEMENTED)
+    {
+        UtAssert_NA("OS_SymbolLookup API not implemented");
+    }
+    else
+    {
+        UtAssert_True(status != OS_SUCCESS, "OS_SymbolLookup(ShouldNotExist) = %d, Addr = %lx", (int)status,
+                      (unsigned long)SymAddress);
+    }
 } /* end TestSymbolApi */
 
 void UtTest_Setup(void)

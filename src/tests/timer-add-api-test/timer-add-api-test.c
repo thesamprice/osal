@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*
  * Filename: timer-add-api-test.c
@@ -68,8 +66,8 @@ void TestTimerAddApi(void)
     uint32    expected;
     osal_id_t badid;
     osal_id_t timer_id;
-    osal_id_t time_base_id;
-    int       i = 0;
+    osal_id_t time_base_id = OS_OBJECT_ID_UNDEFINED;
+    int       i            = 0;
     int32     TimerStatus[NUMBER_OF_TIMERS];
     osal_id_t TimerID[OS_MAX_TIMERS];
     char      temp_name[OS_MAX_API_NAME + 5];
@@ -87,6 +85,7 @@ void TestTimerAddApi(void)
 
     for (i = 0; i < OS_MAX_TIMERS; i++)
     {
+        TimerID[i] = OS_OBJECT_ID_UNDEFINED;
         snprintf(temp_name, sizeof(temp_name), "Timer%d", i);
         UtAssert_INT32_EQ(OS_TimerAdd(&TimerID[i], temp_name, time_base_id, &null_func, NULL), OS_SUCCESS);
         UtPrintf("Timer %d Created ID=%lx", i, OS_ObjectIdToInteger(TimerID[i]));

@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-loader.c
+ * \file
  * \ingroup  rtems
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -35,6 +33,17 @@
 #include "os-impl-loader.h"
 #include "os-shared-module.h"
 #include "os-shared-idmap.h"
+#include <rtems/rtl/rtl.h>
+
+/****************************************************************************************
+                                   TYPEDEFS
+ ***************************************************************************************/
+
+#ifdef OS_RTEMS_4_DEPRECATED
+
+typedef rtems_rtl_obj_t rtems_rtl_obj; /* Alias for RTEMS 4.11 */
+
+#endif
 
 /****************************************************************************************
                                    GLOBAL DATA
@@ -144,7 +153,7 @@ int32 OS_ModuleLoad_Impl(const OS_object_token_t *token, const char *translated_
          * is acceptable.  If not acceptable, it sets the status back to an error.
          */
 
-        OS_DEBUG("module has has unresolved externals\n");
+        OS_DEBUG("Module has unresolved externals\n");
         status = OS_SUCCESS; /* note - not final, probably overridden */
         OSAL_UNRESOLVED_ITERATE(OS_rtems_rtl_check_unresolved, &status);
     }
@@ -216,10 +225,46 @@ int32 OS_ModuleUnload_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_ModuleGetInfo_Impl(const OS_object_token_t *token, OS_module_prop_t *module_prop)
 {
-    /*
-    ** RTEMS does not specify a way to get these values
-    ** Everything left at zero
-    */
-    return (OS_SUCCESS);
+    rtems_rtl_obj *                   obj;
+    OS_impl_module_internal_record_t *impl;
+    int32                             status = OS_ERROR;
+
+    impl = OS_OBJECT_TABLE_GET(OS_impl_module_table, *token);
+
+    /* Lock RTEMS runtime loader */
+    if (rtems_rtl_lock() != NULL)
+    {
+        /* Get RTL object from handle and populate section info */
+        obj = rtems_rtl_check_handle(impl->dl_handle);
+
+        if (obj != NULL)
+        {
+            module_prop->addr.valid        = true;
+            module_prop->addr.code_address = (cpuaddr)obj->text_base;
+            module_prop->addr.code_size    = (cpuaddr)rtems_rtl_obj_text_size(obj);
+            module_prop->addr.data_address = (cpuaddr)obj->data_base;
+            module_prop->addr.data_size    = (cpuaddr)rtems_rtl_obj_data_size(obj);
+            module_prop->addr.bss_address  = (cpuaddr)obj->bss_base;
+            module_prop->addr.bss_size     = (cpuaddr)rtems_rtl_obj_bss_size(obj);
+
+            status = OS_SUCCESS;
+        }
+
+        /* Unlock RTEMS runtime loader, report error if applicable */
+        rtems_rtl_unlock();
+
+        if (obj == NULL)
+        {
+            OS_DEBUG("Error getting object information from handle\n");
+            module_prop->addr.valid = false;
+        }
+    }
+    else
+    {
+        OS_DEBUG("Error locking RTEMS runtime loader\n");
+        module_prop->addr.valid = false;
+    }
+
+    return status;
 
 } /* end OS_ModuleGetInfo_Impl */

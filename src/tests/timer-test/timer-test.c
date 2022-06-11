@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*
 ** timertest.c
@@ -59,7 +57,7 @@ uint32 timer_idlookup[OS_MAX_TIMERS];
  */
 void test_func(osal_id_t timer_id)
 {
-    osal_index_t idx;
+    osal_index_t idx = OSAL_INDEX_C(0);
     OS_ConvertToArrayIndex(timer_id, &idx);
     timer_counter[timer_idlookup[idx]]++;
 }
@@ -116,10 +114,12 @@ void TimerTestTask(void)
 
     int          i = 0;
     int32        TimerStatus[NUMBER_OF_TIMERS];
-    osal_index_t TableId;
+    osal_index_t TableId = OSAL_INDEX_C(0);
     osal_id_t    TimerID[NUMBER_OF_TIMERS];
     char         TimerName[NUMBER_OF_TIMERS][20] = {"TIMER1", "TIMER2", "TIMER3", "TIMER4", "TIMER5"};
-    uint32       ClockAccuracy;
+    uint32       ClockAccuracy                   = 0;
+
+    memset(TimerID, 0, sizeof(TimerID));
 
     for (i = 0; i < NUMBER_OF_TIMERS && i < OS_MAX_TIMERS; i++)
     {
@@ -200,7 +200,7 @@ void TimerTestCheck(void)
         if (TimerInterval[i] == 0)
         {
             /*
-             * When the Timer Interval is 0, it's a one shot so expect eaxctly 1 tick
+             * When the Timer Interval is 0, it's a one shot so expect exactly 1 tick
              */
             expected = 1;
             UtAssert_True(timer_counter[i] == (expected), "Timer %d count = %d", (int)i, (int)(expected));

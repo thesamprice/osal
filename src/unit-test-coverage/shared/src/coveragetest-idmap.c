@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-idmap.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -141,7 +139,7 @@ void Test_OS_LockUnlockGlobal(void)
     UT_ResetState(UT_KEY(OS_TaskGetId));
 
     /*
-     * Execute paths where the incorrect patten is followed,
+     * Execute paths where the incorrect pattern is followed,
      * such as unlocking from a different task than the lock.
      * These trigger OS_DEBUG messages, if compiled in.
      *
@@ -338,6 +336,8 @@ void Test_OS_ObjectIdGetBySearch(void)
     int32             actual;
     OS_object_token_t token;
 
+    memset(&token, 0, sizeof(token));
+
     OS_global_task_table[0].active_id = UT_OBJID_OTHER;
     actual   = OS_ObjectIdGetBySearch(OS_LOCK_MODE_NONE, OS_OBJECT_TYPE_OS_TASK, TestAlwaysMatch, NULL, &token);
     expected = OS_SUCCESS;
@@ -428,9 +428,9 @@ void Test_OS_ObjectIdToArrayIndex(void)
      * which is out of range.
      */
     osal_id_t    objid;
-    osal_index_t local_idx;
-    int32        expected = OS_SUCCESS;
-    int32        actual   = ~OS_SUCCESS;
+    osal_index_t local_idx = OSAL_INDEX_C(0);
+    int32        expected  = OS_SUCCESS;
+    int32        actual    = ~OS_SUCCESS;
 
     /* need to get a "valid" objid for the nominal case */
     OS_ObjectIdCompose_Impl(OS_OBJECT_TYPE_OS_TASK, 1, &objid);
@@ -509,10 +509,12 @@ void Test_OS_ObjectIdGetById(void)
     int32               actual   = ~OS_SUCCESS;
     int32               expected = OS_SUCCESS;
     osal_id_t           refobjid;
-    osal_index_t        local_idx;
-    OS_common_record_t *rptr = NULL;
+    osal_index_t        local_idx = OSAL_INDEX_C(0);
+    OS_common_record_t *rptr      = NULL;
     OS_object_token_t   token1;
     OS_object_token_t   token2;
+
+    memset(&token1, 0, sizeof(token1));
 
     /* verify that the call returns ERROR when not initialized */
     OS_SharedGlobalVars.GlobalState = 0;
@@ -735,6 +737,8 @@ void Test_OS_ObjectIdAllocateNew(void)
     int32             actual   = ~OS_SUCCESS;
     OS_object_token_t token;
 
+    memset(&token, 0, sizeof(token));
+
     actual = OS_ObjectIdAllocateNew(OS_OBJECT_TYPE_OS_TASK, "UT_alloc", &token);
 
     /* Verify Outputs */
@@ -794,7 +798,7 @@ void Test_OS_ConvertToArrayIndex(void)
     int32        expected = OS_SUCCESS;
     int32        actual;
     osal_id_t    refobjid;
-    osal_index_t local_idx;
+    osal_index_t local_idx = OSAL_INDEX_C(0);
 
     /* Need a valid ID to work with */
     OS_ObjectIdCompose_Impl(OS_OBJECT_TYPE_OS_TASK, 1234, &refobjid);
@@ -1067,6 +1071,8 @@ void Test_OS_GetResourceName(void)
     OS_common_record_t *rptr;
     char                NameBuffer[OS_MAX_API_NAME];
 
+    memset(NameBuffer, 0, sizeof(NameBuffer));
+
     /*
      * Set up for the OS_GetResourceName function to return success
      */
@@ -1151,6 +1157,8 @@ void Test_OS_ObjectIDInteger(void)
     int32             recordscount = 0;
     osal_objtype_t    idtype;
     char              str[OS_MAX_API_NAME];
+
+    memset(&token, 0, sizeof(token));
 
     for (idtype = 0; idtype < OS_OBJECT_TYPE_USER; ++idtype)
     {

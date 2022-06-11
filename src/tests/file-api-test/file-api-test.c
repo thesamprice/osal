@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
@@ -131,7 +129,7 @@ void TestCreatRemove(void)
     char      maxfilename[OS_MAX_PATH_LEN];
     char      longfilename[OS_MAX_PATH_LEN + 10];
     int32     status;
-    osal_id_t fd;
+    osal_id_t fd = OS_OBJECT_ID_UNDEFINED;
     int       i;
 
     /* Short file name */
@@ -195,13 +193,13 @@ void TestCreatRemove(void)
 
 /*---------------------------------------------------------------------------------------
  *  Name: TestOpenClose
- * This functions tests the basic functionality of OS_open and OS_close.
+ * This function tests the basic functionality of OS_open and OS_close.
 ---------------------------------------------------------------------------------------*/
 void TestOpenClose(void)
 {
     char      filename[OS_MAX_PATH_LEN];
     int32     status;
-    osal_id_t fd;
+    osal_id_t fd = OS_OBJECT_ID_UNDEFINED;
 
     strncpy(filename, "/drive0/Filename1", sizeof(filename) - 1);
     filename[sizeof(filename) - 1] = 0;
@@ -253,7 +251,7 @@ void TestChmod(void)
 {
     char      filename[OS_MAX_PATH_LEN];
     int32     status;
-    osal_id_t fd;
+    osal_id_t fd = OS_OBJECT_ID_UNDEFINED;
 
     /*Make a file to test on. Start in Read only mode */
     strncpy(filename, "/drive0/Filename1", sizeof(filename) - 1);
@@ -326,7 +324,9 @@ void TestReadWriteLseek(void)
     size_t    offset;
     size_t    size;
     int32     status;
-    osal_id_t fd;
+    osal_id_t fd = OS_OBJECT_ID_UNDEFINED;
+
+    memset(newbuffer, 0, sizeof(newbuffer));
 
     strncpy(filename, "/drive0/Filename1", sizeof(filename) - 1);
     filename[sizeof(filename) - 1] = 0;
@@ -448,10 +448,12 @@ void TestMkRmDirFreeBytes(void)
     char         buffer2[OS_MAX_PATH_LEN];
     char         copybuffer1[OS_MAX_PATH_LEN];
     char         copybuffer2[OS_MAX_PATH_LEN];
-    osal_id_t    fd1;
-    osal_id_t    fd2;
+    osal_id_t    fd1 = OS_OBJECT_ID_UNDEFINED;
+    osal_id_t    fd2 = OS_OBJECT_ID_UNDEFINED;
     size_t       size;
     OS_statvfs_t statbuf;
+
+    memset(&statbuf, 0, sizeof(statbuf));
 
     /* make the directory names for testing, as well as the filenames and the buffers
      * to put in the files */
@@ -485,7 +487,7 @@ void TestMkRmDirFreeBytes(void)
     status = OS_OpenCreate(&fd2, filename2, OS_FILE_FLAG_CREATE | OS_FILE_FLAG_TRUNCATE, OS_READ_WRITE);
     UtAssert_True(status >= OS_SUCCESS, "status after creat 2 = %d", (int)status);
 
-    /* write the propper buffers into each of the files */
+    /* write the proper buffers into each of the files */
     size   = strlen(buffer1);
     status = OS_write(fd1, buffer1, size);
     UtAssert_True(status == size, "status after write 1 = %d size = %lu", (int)status, (unsigned long)size);
@@ -563,9 +565,9 @@ void TestOpenReadCloseDir(void)
     char        buffer1[OS_MAX_PATH_LEN];
     char        buffer2[OS_MAX_PATH_LEN];
     size_t      size;
-    osal_id_t   fd1;
-    osal_id_t   fd2;
-    osal_id_t   dirh;
+    osal_id_t   fd1  = OS_OBJECT_ID_UNDEFINED;
+    osal_id_t   fd2  = OS_OBJECT_ID_UNDEFINED;
+    osal_id_t   dirh = OS_OBJECT_ID_UNDEFINED;
     os_dirent_t dirent;
 
     /* make the directory names for testing, as well as the filenames and the buffers
@@ -770,7 +772,7 @@ void TestRename(void)
     char midname1[OS_MAX_PATH_LEN];
     char newfilename1[OS_MAX_PATH_LEN];
 
-    osal_id_t fd1;
+    osal_id_t fd1 = OS_OBJECT_ID_UNDEFINED;
     size_t    size;
 
     /* make the directory names for testing, as well as the filenames and the buffers
@@ -796,7 +798,7 @@ void TestRename(void)
     status = OS_OpenCreate(&fd1, filename1, OS_FILE_FLAG_CREATE | OS_FILE_FLAG_TRUNCATE, OS_READ_WRITE);
     UtAssert_True(status >= OS_SUCCESS, "status after creat 1 = %d", (int)status);
 
-    /* write the propper buffes into  the file */
+    /* write the proper buffers into  the file */
 
     size   = strlen(buffer1);
     status = OS_write(fd1, buffer1, size);
@@ -856,7 +858,7 @@ void TestStat(void)
     char       dir1slash[OS_MAX_PATH_LEN];
     char       buffer1[OS_MAX_PATH_LEN];
     os_fstat_t StatBuff;
-    osal_id_t  fd1;
+    osal_id_t  fd1 = OS_OBJECT_ID_UNDEFINED;
     size_t     size;
 
     strcpy(dir1, "/drive0/DirectoryName");
@@ -904,7 +906,7 @@ void TestStat(void)
 
 /*---------------------------------------------------------------------------------------
  *  Name: TestOpenFileAPI
- *  This function tests the the misc open File API:
+ *  This function tests the misc open File API:
  *    OS_FileOpenCheck(char *Filename);
  *    OS_CloseAllFiles(void);
  *    OS_CloseFileByName(char *Filename);

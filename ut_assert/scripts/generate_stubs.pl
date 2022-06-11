@@ -1,17 +1,15 @@
 #!/usr/bin/perl
 
 #
-#  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+#  NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
 #
-#  Copyright (c) 2019 United States Government as represented by
-#  the Administrator of the National Aeronautics and Space Administration.
+#  Copyright (c) 2020 United States Government as represented by the
+#  Administrator of the National Aeronautics and Space Administration.
 #  All Rights Reserved.
 #
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may
+#  not use this file except in compliance with the License. You may obtain
+#  a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -110,6 +108,7 @@ foreach my $hdr (@hdrlist)
     my $file = "";
     my $file_boilerplate;
     my $file_variadic;
+    my @ifdef_level = (1);
 
     # All header files start with some legal boilerplate comments
     # Take the first one and save it, so it can be put into the output.
@@ -125,7 +124,31 @@ foreach my $hdr (@hdrlist)
             # so it will be in a single "line" in the result.
             chomp if (s/\\$//);
         }
-        push(@lines, $_);
+
+        # detect "#ifdef" lines - some may need to be recognized.
+        # at the very least, any C++-specific bits need to be skipped.
+        # for now this just specifically looks for __cplusplus
+        if (/^\#(if\w+)\s+(.*)$/) {
+            my $check = $1;
+            my $cond = $2;
+            my $result = $ifdef_level[0];
+
+            if ($cond eq "__cplusplus" && $check eq "ifdef") {
+                $result = 0;
+            }
+
+            unshift(@ifdef_level, $result);
+        }
+        elsif (/^\#else/) {
+            # invert the last preprocessor condition
+            $ifdef_level[0] = $ifdef_level[0] ^ $ifdef_level[1];
+        }
+        elsif (/^\#endif/) {
+            shift(@ifdef_level);
+        }
+        elsif ($ifdef_level[0]) {
+            push(@lines, $_) ;
+        }
     }
     close(HDR);
 
@@ -163,7 +186,6 @@ foreach my $hdr (@hdrlist)
     foreach (@lines) {
         next if (/\btypedef\b/);        # ignore typedefs
         next if (/\bstatic inline\b/);  # ignore
-
 
         # discard "extern" qualifier
         # (but other qualifiers like "const" are OK and should be preserved, as
@@ -300,7 +322,7 @@ foreach my $basename (sort keys %{$publicapi}) {
 
     # Now actually write the output stub source file
     # NOTE: no need to be too fussy about whitespace and formatting here
-    # as the output file will be passed to clang-fomat at the end.
+    # as the output file will be passed to clang-format at the end.
     open(OUT, ">$stubfile") || die "Cannot open $stubfile for writing";
 
     print OUT $boilerplate . "\n";
@@ -327,7 +349,7 @@ foreach my $basename (sort keys %{$publicapi}) {
             if ($fileapi->{$funcname}->{variadic}) {
                 $args .= ", va_list";
             }
-            print OUT "extern void ".$handler_func->{$funcname}."($args);\n";
+            print OUT "void ".$handler_func->{$funcname}."($args);\n";
         }
     }
 
@@ -408,4 +430,3 @@ foreach my $basename (sort keys %{$publicapi}) {
 
     print "Generated $stubfile\n";
 }
-

@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -47,6 +45,7 @@
 #include "osapi-common.h"
 #include "osapi-bsp.h"
 #include "osapi-error.h"
+#include "osapi-idmap.h"
 
 /*
  * A set of simplified console control options
@@ -97,6 +96,14 @@ typedef struct
     char **           ArgV;          /* strings for boot/startup parameters */
     int32             AppStatus;     /* value which can be returned to the OS (0=nominal) */
     osal_blockcount_t MaxQueueDepth; /* Queue depth limit supported by BSP (0=no limit) */
+
+    /*
+     * Configuration registry - abstract integer flags to select platform-specific options
+     * for each resource type.  Flags are all platform-defined, and not every platform uses this
+     * feature.
+     */
+    uint32 ResoureConfig[OS_OBJECT_TYPE_USER];
+
 } OS_BSP_GlobalData_t;
 
 /*
@@ -113,7 +120,7 @@ extern OS_BSP_GlobalData_t OS_BSP_Global;
 
     Purpose: Get exclusive access to a BSP-provided service or object
 
-             Useful in conjuction with console output functions to avoid strings
+             Useful in conjunction with console output functions to avoid strings
              from multiple tasks getting mixed together in the final output.
 
  ------------------------------------------------------------------*/

@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*
  * Filename: network-api-test.c
@@ -123,7 +121,7 @@ void TestNetworkApiBadArgs(void)
 
 void TestNetworkApiInet6(void)
 {
-    osal_id_t     socket_id;
+    osal_id_t     socket_id = OS_OBJECT_ID_UNDEFINED;
     OS_SockAddr_t addr;
     int32         actual;
 
@@ -230,15 +228,21 @@ void TestDatagramNetworkApi(void)
     char             AddrBuffer2[32];
     char             AddrBuffer3[32];
     char             AddrBuffer4[32];
-    uint32           Buf1 = 111;
-    uint32           Buf2 = 000;
-    uint32           Buf3 = 222;
-    uint32           Buf4 = 000;
-    osal_id_t        objid;
+    uint32           Buf1  = 111;
+    uint32           Buf2  = 0;
+    uint32           Buf3  = 222;
+    uint32           Buf4  = 0;
+    osal_id_t        objid = OS_OBJECT_ID_UNDEFINED;
     osal_id_t        invalid_fd;
-    uint16           PortNum;
+    uint16           PortNum = 0;
     OS_socket_prop_t prop;
     OS_SockAddr_t    l_addr;
+
+    memset(AddrBuffer1, 0, sizeof(AddrBuffer1));
+    memset(AddrBuffer2, 0, sizeof(AddrBuffer2));
+    memset(AddrBuffer3, 0, sizeof(AddrBuffer3));
+    memset(AddrBuffer4, 0, sizeof(AddrBuffer4));
+    memset(&prop, 0, sizeof(prop));
 
     if (!networkImplemented)
     {
@@ -296,7 +300,7 @@ void TestDatagramNetworkApi(void)
     /* Send data from peer1 to peer2 */
     UtAssert_INT32_EQ(OS_SocketSendTo(p1_socket_id, &Buf1, sizeof(Buf1), &p2_addr), sizeof(Buf1));
 
-    /* Recieve data from peer1 to peer2 */
+    /* Receive data from peer1 to peer2 */
     UtAssert_INT32_EQ(OS_SocketRecvFrom(p2_socket_id, &Buf2, sizeof(Buf2), &l_addr, UT_TIMEOUT), sizeof(Buf2));
     UtAssert_True(Buf1 == Buf2, "Buf1 (%ld) == Buf2 (%ld)", (long)Buf1, (long)Buf2);
 
@@ -314,7 +318,7 @@ void TestDatagramNetworkApi(void)
     /* Send data from peer2 to peer1 */
     UtAssert_INT32_EQ(OS_SocketSendTo(p2_socket_id, &Buf3, sizeof(Buf3), &p1_addr), sizeof(Buf3));
 
-    /* Recieve data from peer2 to peer1 */
+    /* Receive data from peer2 to peer1 */
     UtAssert_INT32_EQ(OS_SocketRecvFrom(p1_socket_id, &Buf4, sizeof(Buf4), &l_addr, UT_TIMEOUT), sizeof(Buf4));
     UtAssert_True(Buf3 == Buf4, "Buf3 (%ld) == Buf4 (%ld)", (long)Buf3, (long)Buf4);
 
@@ -382,7 +386,7 @@ void Server_Fn(void)
 
         UtPrintf("SERVER: handling connection %u", (unsigned int)iter);
 
-        /* Recieve incoming data from client -
+        /* Receive incoming data from client -
          * should be exactly 4 bytes on most cycles, but 0 bytes on the cycle
          * where write shutdown was done by client side prior to initial write. */
         if (iter == UT_STREAM_CONNECTION_RDWR_SHUTDOWN)
@@ -409,7 +413,7 @@ void Server_Fn(void)
         {
             /* Send back to client:
              *   1. uint32 value indicating number of connections so far (4 bytes)
-             *   2. Original value recieved above (4 bytes)
+             *   2. Original value received above (4 bytes)
              *   3. String of all possible 8-bit chars [0-255]  (256 bytes)
              */
             Status = OS_TimedWrite(connsock_id, &iter, sizeof(iter), UT_TIMEOUT);
@@ -674,20 +678,20 @@ void TestStreamNetworkApi(void)
              * work) */
             if (iter != UT_STREAM_CONNECTION_READ_SHUTDOWN && iter != UT_STREAM_CONNECTION_RDWR_SHUTDOWN)
             {
-                /* Recieve back data from server, first is loop count */
+                /* Receive back data from server, first is loop count */
                 expected = sizeof(loopcnt);
                 actual   = OS_TimedRead(c_socket_id, &loopcnt, sizeof(loopcnt), UT_TIMEOUT);
                 UtAssert_True(actual == expected, "OS_TimedRead() (%ld) == %ld", (long)actual, (long)expected);
                 UtAssert_UINT32_EQ(iter, loopcnt);
 
-                /* Recieve back data from server, next is original string */
+                /* Receive back data from server, next is original string */
                 expected = sizeof(Buf_rcv_c);
                 actual   = OS_TimedRead(c_socket_id, Buf_rcv_c, sizeof(Buf_rcv_c), UT_TIMEOUT);
                 UtAssert_True(actual == expected, "OS_TimedRead() (%ld) == %ld", (long)actual, (long)expected);
                 UtAssert_True(strcmp(Buf_send_c, Buf_rcv_c) == 0, "Buf_rcv_c (%s) == Buf_send_c (%s)", Buf_rcv_c,
                               Buf_send_c);
 
-                /* Recieve back data from server, next is 8-bit charset */
+                /* Receive back data from server, next is 8-bit charset */
                 expected = sizeof(Buf_each_char_rcv);
                 actual   = OS_TimedRead(c_socket_id, Buf_each_char_rcv, sizeof(Buf_each_char_rcv), UT_TIMEOUT);
                 UtAssert_True(actual == expected, "OS_TimedRead() (%ld) == %ld", (long)actual, (long)expected);

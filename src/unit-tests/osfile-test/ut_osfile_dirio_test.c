@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*================================================================================*
 ** File:  ut_osfile_dirio_test.c
@@ -126,7 +124,7 @@ void UT_os_read_n_sort_dirs(osal_id_t);
 **--------------------------------------------------------------------------------*/
 void UT_os_makedir_test()
 {
-    osal_id_t fileDesc;
+    osal_id_t fileDesc = OS_OBJECT_ID_UNDEFINED;
 
     /*-----------------------------------------------------*/
     /* #1 Null-pointer-arg */
@@ -207,7 +205,7 @@ void UT_os_makedir_test()
 **--------------------------------------------------------------------------------*/
 void UT_os_opendir_test()
 {
-    osal_id_t dirh;
+    osal_id_t dirh = OS_OBJECT_ID_UNDEFINED;
 
     /*-----------------------------------------------------*/
     /* #1 Null-pointer-arg */
@@ -280,7 +278,7 @@ void UT_os_opendir_test()
 **--------------------------------------------------------------------------------*/
 void UT_os_closedir_test()
 {
-    osal_id_t   dirh;
+    osal_id_t   dirh = OS_OBJECT_ID_UNDEFINED;
     os_dirent_t dirEntry;
 
     UT_RETVAL(OS_DirectoryClose(UT_OBJID_INCORRECT), OS_ERR_INVALID_ID);
@@ -438,7 +436,7 @@ void UT_os_readdir_test()
 **  10) Call OS_readdir() the 3rd time with the directory descriptor pointer returned in #3
 **  11) Expect the returned value to be
 **        (a) a directory entry pointer __and__
-**        (b) a the directory name to be "."
+**        (b) the directory name to be "."
 **--------------------------------------------------------------------------------*/
 void UT_os_rewinddir_test()
 {
@@ -545,7 +543,7 @@ void UT_os_rewinddir_test()
 **--------------------------------------------------------------------------------*/
 void UT_os_removedir_test()
 {
-    osal_id_t fileDesc;
+    osal_id_t fileDesc = OS_OBJECT_ID_UNDEFINED;
 
     /*-----------------------------------------------------*/
     /* #1 Null-pointer-arg */
@@ -602,6 +600,7 @@ void UT_os_read_n_sort_dirs(osal_id_t dirh)
     const char *Name;
 
     memset(g_dirItems, 0, sizeof(g_dirItems));
+    memset(&dirEntry, 0, sizeof(dirEntry));
 
     NumMatched = 0;
     NumEntries = 0;

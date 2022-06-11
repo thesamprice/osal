@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -42,7 +40,7 @@
 /**
  * Using a generic memory address as a key into table -
  * this should allow the function name (with a cast) to be used as the key,
- * but allow allows a fancier hash algorithm if needed.
+ * but allows a fancier hash algorithm if needed.
  * Note - in pedantic mode using a "void *" here triggers a warning
  * if used with a function address, but no warning is generated if using
  * an integer memory address type.
@@ -212,7 +210,7 @@ void UT_SetDataBuffer(UT_EntryKey_t FuncKey, void *DataBuffer, size_t BufferSize
  *
  * \param FuncKey The stub function to reference.
  * \param DataBuffer Set to Pointer to data buffer that is associated with the stub function (output)
- * \param BufferSize Set to Maximum Size of data buffer (output)
+ * \param MaxSize Set to Maximum Size of data buffer (output)
  * \param Position Set to current position in data buffer (output)
  */
 void UT_GetDataBuffer(UT_EntryKey_t FuncKey, void **DataBuffer, size_t *MaxSize, size_t *Position);
@@ -557,9 +555,10 @@ void UT_Stub_RegisterContextWithMetaData(UT_EntryKey_t FuncKey, const char *Name
  *
  * This does not return NULL, such that the returned value can always be dereferenced.
  *
- * \param ContextPtr   The context structure containing arguments
- * \param Name         Argument name to find
- * \param ExpectedSize The size of the expected object type
+ * \param ContextPtr       The context structure containing arguments
+ * \param Name             Argument name to find
+ * \param ExpectedTypeSize The size of the expected object type
+ *
  * \returns Pointer to buffer containing the value.
  */
 const void *UT_Hook_GetArgPtr(const UT_StubContext_t *ContextPtr, const char *Name, size_t ExpectedTypeSize);
@@ -588,8 +587,10 @@ const void *UT_Hook_GetArgPtr(const UT_StubContext_t *ContextPtr, const char *Na
  * \param FunctionName  The printable name of the actual function called, for the debug message.  If
  *    NULL then no debug message will be generated.
  * \param FuncKey       The Key to look up in the table
+ * \param DefaultRc     Default return code
+ * \param ArgList       Argument list
  */
-int32 UT_DefaultStubImplWithArgs(const char *FunctionName, UT_EntryKey_t FuncKey, int32 DefaultRc, va_list va);
+int32 UT_DefaultStubImplWithArgs(const char *FunctionName, UT_EntryKey_t FuncKey, int32 DefaultRc, va_list ArgList);
 
 /**
  * Handles a stub call for a variadic function
@@ -605,8 +606,10 @@ int32 UT_DefaultStubImplWithArgs(const char *FunctionName, UT_EntryKey_t FuncKey
  *
  * \sa UT_DefaultStubImplWithArgs()
  *
- * \param FuncKey       The key of the stub being executed
- * \param FunctionName  The printable name of the actual function called, for the debug message.
+ * \param FuncKey        The key of the stub being executed
+ * \param FunctionName   The printable name of the actual function called, for the debug message.
+ * \param DefaultHandler The default handler
+ * \param VaList         Argument list
  */
 void UT_ExecuteVaHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_VaHandlerFunc_t DefaultHandler,
                          va_list VaList);
@@ -637,8 +640,9 @@ int32 UT_DefaultStubImpl(const char *FunctionName, UT_EntryKey_t FuncKey, int32 
  *
  * \sa UT_DefaultStubImplWithArgs()
  *
- * \param FuncKey       The key of the stub being executed
- * \param FunctionName  The printable name of the actual function called, for the debug message.
+ * \param FuncKey        The key of the stub being executed
+ * \param FunctionName   The printable name of the actual function called, for the debug message.
+ * \param DefaultHandler The default handler
  */
 void UT_ExecuteBasicHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_HandlerFunc_t DefaultHandler);
 

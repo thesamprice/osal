@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-time.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -102,8 +100,8 @@ void Test_OS_TimerCreate(void)
      * Test Case For:
      * int32 OS_TimerCreate(uint32 *timer_id, const char *timer_name, uint32 *accuracy, OS_TimerCallback_t callback_ptr)
      */
-    osal_id_t    objid = OS_OBJECT_ID_UNDEFINED;
-    osal_index_t local_id;
+    osal_id_t    objid    = OS_OBJECT_ID_UNDEFINED;
+    osal_index_t local_id = OSAL_INDEX_C(0);
     uint32       accuracy = 0xFFFFFFFF;
 
     OSAPI_TEST_FUNCTION_RC(OS_TimerCreate(&objid, "UT", &accuracy, UT_TimerCallback), OS_SUCCESS);
@@ -171,12 +169,14 @@ void Test_OS_TimerDelete(void)
      * Test Case For:
      * int32 OS_TimerDelete(uint32 timer_id)
      */
-    osal_id_t                      timebase_id;
-    osal_id_t                      timer_objid_1;
-    osal_id_t                      timer_objid_2;
+    osal_id_t                      timebase_id   = OS_OBJECT_ID_UNDEFINED;
+    osal_id_t                      timer_objid_1 = OS_OBJECT_ID_UNDEFINED;
+    osal_id_t                      timer_objid_2 = OS_OBJECT_ID_UNDEFINED;
     OS_timebase_internal_record_t *timebase;
     OS_object_token_t              timebase_token;
     uint32                         accuracy;
+
+    memset(&timebase_token, 0, sizeof(timebase_token));
 
     /* The ObjIds in the ring need to match what will be in the token */
     /* Get a "timebase" from the stub so the objid will validate */
@@ -261,6 +261,8 @@ void Test_OS_TimerGetInfo(void)
      * int32 OS_TimerGetInfo (uint32 timer_id, OS_timer_prop_t *timer_prop)
      */
     OS_timer_prop_t timer_prop;
+
+    memset(&timer_prop, 0, sizeof(timer_prop));
 
     OS_UT_SetupBasicInfoTest(OS_OBJECT_TYPE_OS_TIMECB, UT_INDEX_1, "ABC", UT_OBJID_OTHER);
 

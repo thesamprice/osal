@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*================================================================================*
 ** File:  ut_oscore_misc_test.c
@@ -88,12 +86,13 @@
 *--------------------------------------------------------------------------------*/
 void UT_os_apiinit_test()
 {
-    osal_id_t         qId;
-    osal_blockcount_t qDepth = OSAL_BLOCKCOUNT_C(10);
-    size_t            qSize  = OSAL_SIZE_C(4);
-    uint32            qFlags = 0;
-    osal_id_t         semIds[3];
-    uint32            semInitValue = 1, semOptions = 0;
+    osal_id_t         qId          = OS_OBJECT_ID_UNDEFINED;
+    osal_blockcount_t qDepth       = OSAL_BLOCKCOUNT_C(10);
+    size_t            qSize        = OSAL_SIZE_C(4);
+    uint32            qFlags       = 0;
+    osal_id_t         semIds[3]    = {OS_OBJECT_ID_UNDEFINED, OS_OBJECT_ID_UNDEFINED, OS_OBJECT_ID_UNDEFINED};
+    uint32            semInitValue = 1;
+    uint32            semOptions   = 0;
 
     /*-----------------------------------------------------*/
     /* #1 Init-not-call-first */
@@ -247,6 +246,8 @@ void UT_os_getlocaltime_test()
     OS_time_t time_struct;
     int32     i = 0;
 
+    memset(&time_struct, 0, sizeof(time_struct));
+
     /*-----------------------------------------------------*/
     /* API not implemented */
 
@@ -310,6 +311,8 @@ void UT_os_setlocaltime_test()
 {
     OS_time_t time_struct;
     int32     i = 0;
+
+    memset(&time_struct, 0, sizeof(time_struct));
 
     /*-----------------------------------------------------*/
     /* API not implemented */
@@ -387,6 +390,8 @@ void UT_os_setlocaltime_test()
 void UT_os_geterrorname_test(void)
 {
     os_err_name_t errNames[4];
+
+    memset(errNames, 0, sizeof(errNames));
 
     /*-----------------------------------------------------*/
     /* #1 Null-pointer-arg */

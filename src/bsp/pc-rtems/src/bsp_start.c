@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*
  * File:  bsp_start.c
@@ -37,7 +35,6 @@
 #include <ctype.h>
 #include <bsp.h>
 #include <rtems.h>
-#include <rtems/mkrootfs.h>
 #include <rtems/bdbuf.h>
 #include <rtems/blkdev.h>
 #include <rtems/diskdevs.h>
@@ -48,6 +45,10 @@
 #include <rtems/fsmount.h>
 #include <rtems/shell.h>
 #include <rtems/rtl/dlfcn-shell.h>
+
+#if defined(OS_RTEMS_4_DEPRECATED) || defined(OS_RTEMS_5)
+#include <rtems/mkrootfs.h>
+#endif
 
 #include "pcrtems_bsp_internal.h"
 
@@ -101,7 +102,7 @@ void OS_BSP_Setup(void)
      * Known arguments are handled here, and unknown args are
      * saved for the UT application.
      *
-     * Batch mode is intended for non-interative execution.
+     * Batch mode is intended for non-interactive execution.
      *
      * It does two things:
      * - do not start the shell task
@@ -180,6 +181,7 @@ void OS_BSP_Setup(void)
         BSP_DEBUG("rtems_semaphore_create: %s\n", rtems_status_text(status));
     }
 
+#if defined(OS_RTEMS_4_DEPRECATED) || defined(OS_RTEMS_5)
     /*
     ** Create the RTEMS Root file system
     */
@@ -188,6 +190,7 @@ void OS_BSP_Setup(void)
     {
         printf("Creating Root file system failed: %s\n", rtems_status_text(status));
     }
+#endif
 
     /*
      * Create the mountpoint for the general purpose file system
@@ -385,7 +388,7 @@ rtems_task Init(rtems_task_argument ignored)
 /* configuration information */
 
 /*
-** RTEMS OS Configuration defintions
+** RTEMS OS Configuration definitions
 */
 #define TASK_INTLEVEL 0
 #define CONFIGURE_INIT
@@ -415,10 +418,10 @@ rtems_task Init(rtems_task_argument ignored)
 #define CONFIGURE_MAXIMUM_MESSAGE_QUEUES (OS_MAX_QUEUES + 4)
 #define CONFIGURE_MAXIMUM_DRIVERS        10
 #define CONFIGURE_MAXIMUM_POSIX_KEYS     4
-#ifdef _RTEMS_5_
-#define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS (OS_MAX_NUM_OPEN_FILES + 8)
-#else
+#ifdef OS_RTEMS_4_DEPRECATED
 #define CONFIGURE_LIBIO_MAXIMUM_FILE_DESCRIPTORS (OS_MAX_NUM_OPEN_FILES + 8)
+#else
+#define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS (OS_MAX_NUM_OPEN_FILES + 8)
 #endif
 
 #define CONFIGURE_RTEMS_INIT_TASKS_TABLE

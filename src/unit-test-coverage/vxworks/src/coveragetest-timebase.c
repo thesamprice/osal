@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-timebase.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -105,7 +103,7 @@ void Test_OS_TimeBaseCreate_Impl(void)
     OS_object_token_t token = UT_TOKEN_0;
 
     /*
-     * Test paths though the signal number assignment.
+     * Test paths through the signal number assignment.
      *
      * This should be done first as it will assign the "external_sync"
      * and therefore cause future calls to skip this block.
@@ -289,7 +287,7 @@ void Osapi_Test_Setup(void)
     UT_ResetState(0);
 
     memset(OS_timebase_table, 0, sizeof(OS_timebase_table));
-    memset(OS_global_timebase_table, 0, sizeof(OS_common_record_t) * OS_MAX_BIN_SEMAPHORES);
+    memset(OS_global_timebase_table, 0, sizeof(OS_common_record_t) * OS_MAX_TIMEBASES);
 
     memset(UT_Ref_OS_impl_timebase_table, 0, UT_Ref_OS_impl_timebase_table_SIZE);
 }

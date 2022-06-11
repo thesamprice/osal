@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -75,8 +73,8 @@ typedef enum
 } OS_lock_mode_t;
 
 /*
- * A unique key value issued when obtaining a table lock, based on a
- * the a combination of the requesting task ID and a transaction ID
+ * A unique key value issued when obtaining a table lock, based on
+ * a combination of the requesting task ID and a transaction ID
  */
 typedef struct
 {
@@ -233,7 +231,7 @@ void OS_WaitForStateChange(OS_object_token_t *token, uint32 attempts);
    another thread.
 
    It is not guaranteed what, if any, state change has actually
-   occured when this function returns.  This may be implement as
+   occurred when this function returns.  This may be implemented as
    a simple OS_TaskDelay().
 
  ------------------------------------------------------------------*/
@@ -454,7 +452,7 @@ void OS_ObjectIdRelease(OS_object_token_t *token);
 /*----------------------------------------------------------------
    Function: OS_ObjectIdTransferToken
 
-    Purpose: Transfers ownership of a object token without unlocking/releasing.
+    Purpose: Transfers ownership of an object token without unlocking/releasing.
              The original token will become benign and the new token becomes active.
 
     Returns: none
@@ -512,7 +510,7 @@ int32 OS_ObjectIdIteratorInit(OS_ObjectMatchFunc_t matchfunc, void *matcharg, os
 /*----------------------------------------------------------------
    Function: OS_ObjectIdIterateActive
 
-    Purpose: Initialize a object iterator of the given type that will
+    Purpose: Initialize an object iterator of the given type that will
              return only active/valid OSAL objects.
 
     Returns: OS_SUCCESS on success, or relevant error code

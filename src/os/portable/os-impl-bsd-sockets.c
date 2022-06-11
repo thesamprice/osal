@@ -1,28 +1,26 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file   os-impl-bsd-sockets.c
+ * \file
  * \author joseph.p.hickey@nasa.gov
  *
- * Purpose: This file contains the network functionality for for
+ * Purpose: This file contains the network functionality for
  *      systems which implement the BSD-style socket API.
  */
 
@@ -63,6 +61,22 @@
                                      DEFINES
 ****************************************************************************************/
 
+/*
+ * The OS layer may define a macro to set the proper flags on newly-opened sockets.
+ * If not set, then a default implementation is used, which uses fcntl() to set O_NONBLOCK
+ */
+#ifndef OS_IMPL_SOCKET_FLAGS
+#ifdef O_NONBLOCK
+#define OS_IMPL_SOCKET_FLAGS O_NONBLOCK
+#else
+#define OS_IMPL_SOCKET_FLAGS 0 /* do not set any flags */
+#endif
+#endif
+
+#ifndef OS_IMPL_SET_SOCKET_FLAGS
+#define OS_IMPL_SET_SOCKET_FLAGS(tok) OS_SetSocketDefaultFlags_Impl(tok)
+#endif
+
 typedef union
 {
     char               data[OS_SOCKADDR_MAX_LEN];
@@ -77,10 +91,41 @@ typedef union
  * Confirm that the abstract socket address buffer size (OS_SOCKADDR_MAX_LEN) is
  * large enough to store any of the enabled address types.  If this is true, the
  * size of the above union will match OS_SOCKADDR_MAX_LEN.  However, if any
- * implemention-provided struct types are larger than this, the union will be
+ * implementation-provided struct types are larger than this, the union will be
  * larger, and this indicates a configuration error.
  */
 CompileTimeAssert(sizeof(OS_SockAddr_Accessor_t) == OS_SOCKADDR_MAX_LEN, SockAddrSize);
+
+/*
+ * Default flags implementation: Set the O_NONBLOCK flag via fcntl().
+ * An implementation can also elect custom configuration by setting
+ * the OS_IMPL_SET_SOCKET_FLAGS macro to point to an alternate function.
+ */
+void OS_SetSocketDefaultFlags_Impl(const OS_object_token_t *token)
+{
+    OS_impl_file_internal_record_t *impl;
+    int                             os_flags;
+
+    impl = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
+
+    os_flags = fcntl(impl->fd, F_GETFL);
+    if (os_flags == -1)
+    {
+        /* No recourse if F_GETFL fails - just report the error and move on. */
+        OS_DEBUG("fcntl(F_GETFL): %s\n", strerror(errno));
+    }
+    else
+    {
+        os_flags |= OS_IMPL_SOCKET_FLAGS;
+        if (fcntl(impl->fd, F_SETFL, os_flags) == -1)
+        {
+            /* No recourse if F_SETFL fails - just report the error and move on. */
+            OS_DEBUG("fcntl(F_SETFL): %s\n", strerror(errno));
+        }
+    }
+
+    impl->selectable = true;
+}
 
 /****************************************************************************************
                                     Sockets API
@@ -160,23 +205,7 @@ int32 OS_SocketOpen_Impl(const OS_object_token_t *token)
      * nonblock mode does improve robustness in the event that multiple tasks
      * attempt to accept new connections from the same server socket at the same time.
      */
-    os_flags = fcntl(impl->fd, F_GETFL);
-    if (os_flags == -1)
-    {
-        /* No recourse if F_GETFL fails - just report the error and move on. */
-        OS_DEBUG("fcntl(F_GETFL): %s\n", strerror(errno));
-    }
-    else
-    {
-        os_flags |= OS_IMPL_SOCKET_FLAGS;
-        if (fcntl(impl->fd, F_SETFL, os_flags) == -1)
-        {
-            /* No recourse if F_SETFL fails - just report the error and move on. */
-            OS_DEBUG("fcntl(F_SETFL): %s\n", strerror(errno));
-        }
-    }
-
-    impl->selectable = OS_IMPL_SOCKET_SELECTABLE;
+    OS_IMPL_SET_SOCKET_FLAGS(token);
 
     return OS_SUCCESS;
 } /* end OS_SocketOpen_Impl */
@@ -397,7 +426,6 @@ int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_
     int32                           return_code;
     uint32                          operation;
     socklen_t                       addrlen;
-    int                             os_flags;
     OS_impl_file_internal_record_t *sock_impl;
     OS_impl_file_internal_record_t *conn_impl;
 
@@ -432,32 +460,7 @@ int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_
             {
                 Addr->ActualLength = addrlen;
 
-                /*
-                 * Set the standard options on the filehandle by default --
-                 * this may set it to non-blocking mode if the implementation supports it.
-                 * any blocking would be done explicitly via the select() wrappers
-                 *
-                 * NOTE: The implementation still generally works without this flag set, but
-                 * nonblock mode does improve robustness in the event that multiple tasks
-                 * attempt to read from the same socket at the same time.
-                 */
-                os_flags = fcntl(conn_impl->fd, F_GETFL);
-                if (os_flags == -1)
-                {
-                    /* No recourse if F_GETFL fails - just report the error and move on. */
-                    OS_DEBUG("fcntl(F_GETFL): %s\n", strerror(errno));
-                }
-                else
-                {
-                    os_flags |= OS_IMPL_SOCKET_FLAGS;
-                    if (fcntl(conn_impl->fd, F_SETFL, os_flags) == -1)
-                    {
-                        /* No recourse if F_SETFL fails - just report the error and move on. */
-                        OS_DEBUG("fcntl(F_SETFL): %s\n", strerror(errno));
-                    }
-                }
-
-                conn_impl->selectable = OS_IMPL_SOCKET_SELECTABLE;
+                OS_IMPL_SET_SOCKET_FLAGS(conn_token);
             }
         }
     }

@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file utstubs.c
+ * \file
  *
  *  Created on: Feb 25, 2015
  *      Author: joseph.p.hickey@nasa.gov
@@ -1037,24 +1035,24 @@ int32 UT_DefaultStubImpl(const char *FunctionName, UT_EntryKey_t FuncKey, int32 
     return Retcode;
 }
 
-void UT_ExecuteBasicHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_HandlerFunc_t DefaultHook)
+void UT_ExecuteBasicHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_HandlerFunc_t DefaultHandler)
 {
     /* Check if the test case registered a hook, and use the default if not */
-    if (UT_GetStubEntry(FuncKey, UT_ENTRYTYPE_FINAL_HANDLER) == NULL && DefaultHook != NULL)
+    if (UT_GetStubEntry(FuncKey, UT_ENTRYTYPE_FINAL_HANDLER) == NULL && DefaultHandler != NULL)
     {
-        UT_SetHandlerFunction(FuncKey, DefaultHook, NULL);
+        UT_SetHandlerFunction(FuncKey, DefaultHandler, NULL);
     }
 
     UT_DefaultStubImpl(FunctionName, FuncKey, 0, NULL);
 }
 
-void UT_ExecuteVaHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_VaHandlerFunc_t DefaultHook,
+void UT_ExecuteVaHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_VaHandlerFunc_t DefaultHandler,
                          va_list VaList)
 {
     /* Check if the test case registered a hook, and use the default if not */
-    if (UT_GetStubEntry(FuncKey, UT_ENTRYTYPE_FINAL_HANDLER) == NULL && DefaultHook != NULL)
+    if (UT_GetStubEntry(FuncKey, UT_ENTRYTYPE_FINAL_HANDLER) == NULL && DefaultHandler != NULL)
     {
-        UT_SetVaHandlerFunction(FuncKey, DefaultHook, NULL);
+        UT_SetVaHandlerFunction(FuncKey, DefaultHandler, NULL);
     }
 
     UT_DefaultStubImplWithArgs(FunctionName, FuncKey, 0, VaList);

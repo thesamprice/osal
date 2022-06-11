@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     osapi-idmap.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -1003,7 +1001,7 @@ int32 OS_ObjectIdFindByName(osal_objtype_t idtype, const char *name, osal_id_t *
     OS_object_token_t token;
 
     /*
-     * As this is an internal-only function, calling it will NULL is allowed.
+     * As this is an internal-only function, calling it with NULL is allowed.
      * This is required by the file/dir/socket API since these DO allow multiple
      * instances of the same name.
      */
@@ -1031,7 +1029,7 @@ int32 OS_ObjectIdFindByName(osal_objtype_t idtype, const char *name, osal_id_t *
  *           If successful, this returns with the item locked according to "lock_mode".
  *
  *           IMPORTANT: when this function returns OS_SUCCESS with lock_mode something
- *           other than NONE, then the caller must take appropriate action to UN lock
+ *           other than NONE, then the caller must take appropriate action to UNLOCK
  *           after completing the respective operation.  The OS_ObjectIdRelease()
  *           function may be used to release the lock appropriately for the lock_mode.
  *
@@ -1056,7 +1054,7 @@ int32 OS_ObjectIdGetById(OS_lock_mode_t lock_mode, osal_objtype_t idtype, osal_i
         /*
          * The "ConvertToken" routine will return with the global lock
          * in a state appropriate for returning to the caller, as indicated
-         * by the "check_mode" paramter.
+         * by the "check_mode" parameter.
          *
          * Note If this operation fails, then it always unlocks the global for
          * all check_mode's other than NONE.
@@ -1209,7 +1207,7 @@ int32 OS_ObjectIdAllocateNew(osal_objtype_t idtype, const char *name, OS_object_
     }
 
     /*
-     * Check if an object of the same name already exits.
+     * Check if an object of the same name already exists.
      * If so, a new object cannot be allocated.
      */
     if (name != NULL)

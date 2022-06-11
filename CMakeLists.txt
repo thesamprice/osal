@@ -48,7 +48,7 @@ project(OSAL C CXX)
 # part of the open source release.
 # CAUTION: The API between the OSAL and the low level implementation and/or BSP
 # is not stabilized, and may change with every OSAL release.  No attempt is made
-# to provide backward compatibility with to external sources.
+# to provide backward compatibility with external sources.
 set(OSAL_EXT_SOURCE_DIR "$ENV{OSAL_EXT_SOURCE_DIR}"
     CACHE PATH "External source directory to check for additional OS/BSP implementations")
 
@@ -106,7 +106,7 @@ add_subdirectory(ut_assert)
 
 
 # OSAL_SYSTEM_BSPTYPE indicate which of the BSP packages
-# to build.  These is required and must be defined. Confirm that this exists
+# to build.  This is required and must be defined. Confirm that this exists
 # and error out now if it does not.
 if (NOT DEFINED OSAL_SYSTEM_BSPTYPE)
   message(FATAL_ERROR "OSAL_SYSTEM_BSPTYPE must be set to the appropriate BSP")
@@ -175,6 +175,7 @@ set(BSP_SRCLIST
     src/bsp/shared/src/bsp_default_app_run.c
     src/bsp/shared/src/bsp_default_app_startup.c
     src/bsp/shared/src/bsp_default_symtab.c
+    src/bsp/shared/src/bsp_default_resourcecfg.c
 )
 
 # Define the external "osal_bsp" static library target

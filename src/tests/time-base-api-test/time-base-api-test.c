@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*
  * Filename: time-base-api-test.c
@@ -71,8 +69,8 @@ void TestTimeBaseApi(void)
     uint32             freerun;
     osal_id_t          objid;
     osal_id_t          badid;
-    osal_id_t          time_base_id;
-    osal_id_t          time_base_id2;
+    osal_id_t          time_base_id  = OS_OBJECT_ID_UNDEFINED;
+    osal_id_t          time_base_id2 = OS_OBJECT_ID_UNDEFINED;
     osal_id_t          tb_id[OS_MAX_TIMEBASES];
     char               timebase_name[OS_MAX_API_NAME + 5];
     OS_timebase_prop_t timebase_prop;
@@ -203,8 +201,6 @@ void TestTimeBaseApi(void)
                   (unsigned long)timebase_prop.nominal_interval_time);
     UtAssert_True(timebase_prop.freerun_time == 0, "timebase_prop.freerun_time (%lu) == 0",
                   (unsigned long)timebase_prop.freerun_time);
-    UtAssert_True(timebase_prop.accuracy >= 0, "timebase_prop.accuracy (%lu) >= 0",
-                  (unsigned long)timebase_prop.accuracy);
 
     /* Test for invalid inputs */
     UtAssert_INT32_EQ(OS_TimeBaseGetInfo(OS_OBJECT_ID_UNDEFINED, &timebase_prop), OS_ERR_INVALID_ID);
