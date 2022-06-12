@@ -26,11 +26,14 @@
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
+extern "C" {
+
 #include "osapi-task.h"
 /*
  * Use the global definitions from the shared layer
  */
 #include <os-shared-globaldefs.h>
+}
 
 #include <QtCore>
 
@@ -55,8 +58,7 @@ typedef struct
     bool                   EnableTaskPriorities;
     osal_blockcount_t      TruncateQueueDepth;
     uint32                 ClockAccuracyNsec;
-    // QThread *              ThreadKey;
-    // pthread_key_t          ThreadKey;
+    QThread *              ThreadKey;
     sigset_t               MaximumSigMask;
     sigset_t               NormalSigMask;
     size_t                 PageSize;

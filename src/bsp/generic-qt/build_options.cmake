@@ -1,14 +1,16 @@
 ##########################################################################
 #
-# Build options for "generic-linux" BSP
+# Build options for "generic-qt" BSP
 #
 ##########################################################################
 
 
+find_package(Qt5 COMPONENTS Core )
 
 # Linux system libraries required for the final link of applications using OSAL
 target_link_libraries(osal_bsp
     pthread dl 
+    Qt5::Core
 )
 
 # C flags that should be used when (re-) compiling code for unit testing.

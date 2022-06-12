@@ -35,8 +35,9 @@
  ***************************************************************************************/
 
 #include "os-qt.h"
-extern "C" {
 #include "os-impl-timebase.h"
+extern "C" {
+
 #include "os-shared-timebase.h"
 #include "os-shared-idmap.h"
 #include "os-shared-common.h"
@@ -112,7 +113,7 @@ void OS_TimeBaseLock_Impl(const OS_object_token_t *token)
     OS_impl_timebase_internal_record_t *impl;
 
     impl = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
-    impl->handler_mutex.lock();
+    impl->handler_mutex->lock();
     
 } /* end OS_TimeBaseLock_Impl */
 
@@ -130,7 +131,7 @@ void OS_TimeBaseUnlock_Impl(const OS_object_token_t *token)
     OS_impl_timebase_internal_record_t *impl;
 
     impl = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
-    impl->handler_mutex.unlock();
+    impl->handler_mutex->unlock();
 } /* end OS_TimeBaseUnlock_Impl */
 
 // /*----------------------------------------------------------------
@@ -462,8 +463,9 @@ int32 OS_QT_TimeBaseAPI_Impl_Init(void)
         ** create the timebase sync mutex
         ** This gives a mechanism to synchronize updates to the timer chain with the
         ** expiration of the timer and processing the chain.
+        ** Constructs a new mutex. The mutex is created in an unlocked state.
         */
-        OS_impl_timebase_table[idx].handler_mutex.unlock();
+        OS_impl_timebase_table[idx].handler_mutex = new QMutex();
 
     }
 

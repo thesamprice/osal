@@ -509,7 +509,7 @@ static bool OS_QT_GetSchedulerParams(int sched_policy, QT_PriorityLimits_t *PriL
  ----------------------------------------------------------------------------------------*/
 int32 OS_QT_TaskAPI_Impl_Init(void)
 {
-    int                    ret;
+    // int                    ret;
 
     QT_PriorityLimits_t sched_fifo_limits;
     QT_PriorityLimits_t sched_rr_limits;
@@ -534,12 +534,13 @@ int32 OS_QT_TaskAPI_Impl_Init(void)
      * Create the key used to store OSAL task IDs
      * TODO
      */
+    QT_GlobalVars.ThreadKey = QThread::currentThread();
     // ret = pthread_key_create(&QT_GlobalVars.ThreadKey, NULL);
-    // if (ret != 0)
-    // {
-    //     OS_DEBUG("Error creating thread key: %s (%d)\n", strerror(ret), ret);
-    //     return OS_ERROR;
-    // }
+    if (QT_GlobalVars.ThreadKey == 0)
+    {
+        OS_DEBUG("Error Getting current thread key");
+        return OS_ERROR;
+    }
 
     /*
     ** Disable Signals to parent thread and therefore all
@@ -615,123 +616,124 @@ int32 OS_QT_TaskAPI_Impl_Init(void)
     ** easily debugging code as a normal user.
     ** TODO Ignoring for QT for now
     */
+//    QThread::Priority priority = QT_GlobalVars.ThreadKey->priority();
 //    ret = pthread_getschedparam(pthread_self(), &sched_policy, &sched_param);
-    ret = -1;
-    if (ret == 0)
-    {
-        #if 0 /* TODO */
-        QT_GlobalVars.SelectedRtScheduler = sched_policy; /* Fallback/default */
-        do
-        {
-            sched_fifo_valid = OS_QT_GetSchedulerParams(SCHED_FIFO, &sched_fifo_limits);
-            sched_rr_valid   = OS_QT_GetSchedulerParams(SCHED_RR, &sched_rr_limits);
+//     ret = -1;
+//     if (ret == 0)
+//     {
+//         #if 0 /* TODO */
+//         QT_GlobalVars.SelectedRtScheduler = sched_policy; /* Fallback/default */
+//         do
+//         {
+//             sched_fifo_valid = OS_QT_GetSchedulerParams(SCHED_FIFO, &sched_fifo_limits);
+//             sched_rr_valid   = OS_QT_GetSchedulerParams(SCHED_RR, &sched_rr_limits);
 
-            /*
-             * If both policies are valid, choose the best. In general, FIFO is preferred
-             * since it is simpler.
-             *
-             * But, RR is preferred if mapping several OSAL priority levels into the
-             * same local priority level. For instance, if 2 OSAL tasks are created at priorities
-             * "2" and "1", both may get mapped to local priority 98, and if using FIFO then the
-             * task at priority "2" could run indefinitely, never letting priority "1" execute.
-             *
-             * This violates the original intent, which would be to have priority "1" preempt
-             * priority "2" tasks.  RR is less bad since it at least guarantees both tasks some
-             * CPU time,
-             */
-            if (sched_fifo_valid && sched_rr_valid)
-            {
-                /*
-                 * If the spread from min->max is greater than what OSAL actually needs,
-                 * then FIFO is the preferred scheduler.  Must take into account one extra level
-                 * for the root task.
-                 */
-                if ((sched_fifo_limits.PriorityMax - sched_fifo_limits.PriorityMin) > OS_MAX_TASK_PRIORITY)
-                {
-                    sched_policy               = SCHED_FIFO;
-                    QT_GlobalVars.PriLimits = sched_fifo_limits;
-                }
-                else
-                {
-                    sched_policy               = SCHED_RR;
-                    QT_GlobalVars.PriLimits = sched_rr_limits;
-                }
-            }
-            else if (sched_fifo_valid)
-            {
-                /* only FIFO is available */
-                sched_policy               = SCHED_FIFO;
-                QT_GlobalVars.PriLimits = sched_fifo_limits;
-            }
-            else if (sched_rr_valid)
-            {
-                /* only RR is available */
-                sched_policy               = SCHED_RR;
-                QT_GlobalVars.PriLimits = sched_rr_limits;
-            }
-            else
-            {
-                /* Nothing is valid, use default */
-                break;
-            }
+//             /*
+//              * If both policies are valid, choose the best. In general, FIFO is preferred
+//              * since it is simpler.
+//              *
+//              * But, RR is preferred if mapping several OSAL priority levels into the
+//              * same local priority level. For instance, if 2 OSAL tasks are created at priorities
+//              * "2" and "1", both may get mapped to local priority 98, and if using FIFO then the
+//              * task at priority "2" could run indefinitely, never letting priority "1" execute.
+//              *
+//              * This violates the original intent, which would be to have priority "1" preempt
+//              * priority "2" tasks.  RR is less bad since it at least guarantees both tasks some
+//              * CPU time,
+//              */
+//             if (sched_fifo_valid && sched_rr_valid)
+//             {
+//                 /*
+//                  * If the spread from min->max is greater than what OSAL actually needs,
+//                  * then FIFO is the preferred scheduler.  Must take into account one extra level
+//                  * for the root task.
+//                  */
+//                 if ((sched_fifo_limits.PriorityMax - sched_fifo_limits.PriorityMin) > OS_MAX_TASK_PRIORITY)
+//                 {
+//                     sched_policy               = SCHED_FIFO;
+//                     QT_GlobalVars.PriLimits = sched_fifo_limits;
+//                 }
+//                 else
+//                 {
+//                     sched_policy               = SCHED_RR;
+//                     QT_GlobalVars.PriLimits = sched_rr_limits;
+//                 }
+//             }
+//             else if (sched_fifo_valid)
+//             {
+//                 /* only FIFO is available */
+//                 sched_policy               = SCHED_FIFO;
+//                 QT_GlobalVars.PriLimits = sched_fifo_limits;
+//             }
+//             else if (sched_rr_valid)
+//             {
+//                 /* only RR is available */
+//                 sched_policy               = SCHED_RR;
+//                 QT_GlobalVars.PriLimits = sched_rr_limits;
+//             }
+//             else
+//             {
+//                 /* Nothing is valid, use default */
+//                 break;
+//             }
 
-            /*
-             * This OSAL QT implementation will reserve the absolute highest priority
-             * for the root thread, which ultimately will just pend in sigsuspend() so
-             * it will not actually DO anything, except if sent a signal.  This way,
-             * that thread will still be able to preempt a high-priority user thread that
-             * has gone awry (i.e. using 100% cpu in FIFO mode).
-             */
-            sched_param.sched_priority = QT_GlobalVars.PriLimits.PriorityMax;
-            --QT_GlobalVars.PriLimits.PriorityMax;
+//             /*
+//              * This OSAL QT implementation will reserve the absolute highest priority
+//              * for the root thread, which ultimately will just pend in sigsuspend() so
+//              * it will not actually DO anything, except if sent a signal.  This way,
+//              * that thread will still be able to preempt a high-priority user thread that
+//              * has gone awry (i.e. using 100% cpu in FIFO mode).
+//              */
+//             sched_param.sched_priority = QT_GlobalVars.PriLimits.PriorityMax;
+//             --QT_GlobalVars.PriLimits.PriorityMax;
 
-            OS_DEBUG("Selected policy %d for RT tasks, root task = %d\n", sched_policy,
-                     (int)sched_param.sched_priority);
+//             OS_DEBUG("Selected policy %d for RT tasks, root task = %d\n", sched_policy,
+//                      (int)sched_param.sched_priority);
 
-            /*
-             * If the spread from min->max is greater than what OSAL actually needs,
-             * then truncate it at the number of OSAL priorities.  This will end up mapping 1:1.
-             * and leaving the highest priority numbers unused.
-             */
-            if ((QT_GlobalVars.PriLimits.PriorityMax - QT_GlobalVars.PriLimits.PriorityMin) >
-                OS_MAX_TASK_PRIORITY)
-            {
-                QT_GlobalVars.PriLimits.PriorityMax = QT_GlobalVars.PriLimits.PriorityMin + OS_MAX_TASK_PRIORITY;
-            }
+//             /*
+//              * If the spread from min->max is greater than what OSAL actually needs,
+//              * then truncate it at the number of OSAL priorities.  This will end up mapping 1:1.
+//              * and leaving the highest priority numbers unused.
+//              */
+//             if ((QT_GlobalVars.PriLimits.PriorityMax - QT_GlobalVars.PriLimits.PriorityMin) >
+//                 OS_MAX_TASK_PRIORITY)
+//             {
+//                 QT_GlobalVars.PriLimits.PriorityMax = QT_GlobalVars.PriLimits.PriorityMin + OS_MAX_TASK_PRIORITY;
+//             }
 
-            ret = pthread_setschedparam(pthread_self(), sched_policy, &sched_param);
-            if (ret != 0)
-            {
-                OS_DEBUG("Could not setschedparam in main thread: %s (%d)\n", strerror(ret), ret);
-                break;
-            }
+//             ret = pthread_setschedparam(pthread_self(), sched_policy, &sched_param);
+//             if (ret != 0)
+//             {
+//                 OS_DEBUG("Could not setschedparam in main thread: %s (%d)\n", strerror(ret), ret);
+//                 break;
+//             }
 
-            /*
-             * Set the boolean to indicate that "setschedparam" worked --
-             * This means that it is also expected to work for future calls.
-             */
-            QT_GlobalVars.SelectedRtScheduler  = sched_policy;
-            QT_GlobalVars.EnableTaskPriorities = true;
+//             /*
+//              * Set the boolean to indicate that "setschedparam" worked --
+//              * This means that it is also expected to work for future calls.
+//              */
+//             QT_GlobalVars.SelectedRtScheduler  = sched_policy;
+//             QT_GlobalVars.EnableTaskPriorities = true;
 
-        } while (0);
-        #endif
-    }
-    else
-    {
-        OS_DEBUG("Could not getschedparam in main thread: %s (%d)\n", strerror(ret), ret);
-    }
+//         } while (0);
+//         #endif
+//     }
+//     else
+//     {
+//         OS_DEBUG("Could not getschedparam in main thread: %s (%d)\n", strerror(ret), ret);
+//     }
 
-#if !defined(OSAL_CONFIG_DEBUG_PERMISSIVE_MODE)
-    /*
-     * In strict (non-permissive) mode, if the task priority setting did not work, fail with an error.
-     * This would be used on a real target where it needs to be ensured that priorities are active
-     * and the "silent fallback" of debug mode operation is not desired.
-     */
-    if (!QT_GlobalVars.EnableTaskPriorities)
-    {
-        return OS_ERROR;
-    }
-#endif
+// #if !defined(OSAL_CONFIG_DEBUG_PERMISSIVE_MODE)
+//     /*
+//      * In strict (non-permissive) mode, if the task priority setting did not work, fail with an error.
+//      * This would be used on a real target where it needs to be ensured that priorities are active
+//      * and the "silent fallback" of debug mode operation is not desired.
+//      */
+//     if (!QT_GlobalVars.EnableTaskPriorities)
+//     {
+//         return OS_ERROR;
+//     }
+// #endif
 
     QT_GlobalVars.PageSize = sysconf(_SC_PAGESIZE);
 
