@@ -64,7 +64,7 @@ find_package(Qt5 COMPONENTS Core )
 include_directories(osal_qt_impl 
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
    PUBLIC
-   /Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
+#   /Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
 #    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/
 
 
@@ -72,7 +72,7 @@ include_directories(osal_qt_impl
 
 include_directories(osal 
 PUBLIC
-/Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
+#/Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
 )
 
 
@@ -172,6 +172,7 @@ set_target_properties(osal_qt_impl
    CXX_EXTENSIONS off
     )
 target_link_libraries(osal_qt_impl 
+PUBLIC 
     Qt5::Core
     )
 #qt5_use_package(osal_qt_impl Core)

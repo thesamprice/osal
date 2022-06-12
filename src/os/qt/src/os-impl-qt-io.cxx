@@ -45,11 +45,12 @@
 #include <string.h>
 #include <errno.h>
 
+extern "C" {
 #include "os-impl-io.h"
 #include "os-shared-file.h"
 #include "os-shared-select.h"
 #include "os-shared-idmap.h"
-
+}
 /* some OS libraries (e.g. VxWorks) do not declare the API to be const-correct
  * It can still use this generic implementation but the call to write() must be
  * cast to a void* to avoid a warning.  The includer can define this if needed.

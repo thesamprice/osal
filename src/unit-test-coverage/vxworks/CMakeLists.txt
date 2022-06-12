@@ -46,7 +46,7 @@ include_directories(${OSAL_SOURCE_DIR}/src/os/${SETNAME}/inc)
 # The "ut-stubs" contains additional stubs specific to this sub-module
 add_subdirectory(ut-stubs)
 add_subdirectory(adaptors)
-
+find_package(Qt5 COMPONENTS Core )
 set(VXWORKS_COVERAGE_LINK_LIST
         ut-adaptor-vxworks
         ut_vxworks_impl_stubs
@@ -57,6 +57,10 @@ set(VXWORKS_COVERAGE_LINK_LIST
         ut_osapi_table_stubs
         ut_osapi_stubs
         ut_libc_stubs
+        ut_bsp_impl_stubs
+#        osal
+Qt5::Core
+
 )
 
 # Add all coverage tests in the src dir

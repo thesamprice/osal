@@ -64,7 +64,7 @@ enum
     LOCAL_OBJID_TYPE  = OS_OBJECT_TYPE_OS_STREAM
 };
 
-OS_stream_internal_record_t OS_stream_table[OS_MAX_NUM_OPEN_FILES];
+OS_stream_internal_record_t OS_stream_table[OS_MAX_NUM_OPEN_FILES] = {};
 
 /*
  * OS_cp copyblock size - in theory could be adjusted

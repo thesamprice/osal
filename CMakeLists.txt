@@ -42,7 +42,7 @@
 ######################################################################
 cmake_minimum_required(VERSION 2.8.12)
 project(OSAL C CXX)
-
+find_package(Qt5 COMPONENTS Core)
 # The "OSAL_EXT_SOURCE_DIR" cache variable may be set to a path
 # on the host containing extra OS/BSP implementations which are not
 # part of the open source release.
@@ -315,7 +315,7 @@ if (ENABLE_UNIT_TESTS)
     function(add_osal_ut_exe TGTNAME)
 
       add_executable(${TGTNAME} ${ARGN})
-      target_link_libraries(${TGTNAME} ut_assert osal)
+      target_link_libraries(${TGTNAME} ut_assert osal Qt5::Core)
       add_test(${TGTNAME} ${TGTNAME})
       foreach(TGT ${INSTALL_TARGET_LIST})
         install(TARGETS ${TGTNAME} DESTINATION ${TGT}/${UT_INSTALL_SUBDIR})

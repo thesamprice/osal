@@ -36,12 +36,15 @@
 #include <sys/wait.h>
 
 #include "os-qt.h"
+extern "C" {
 #include "os-impl-files.h"
 #include "os-shared-file.h"
 
 /****************************************************************************************
                                      GLOBALS
  ***************************************************************************************/
+
+
 
 /*
  * The global file handle table.
@@ -71,6 +74,7 @@ gid_t OS_IMPL_SELF_EGID = 0;
  */
 const int OS_IMPL_REGULAR_FILE_FLAGS = O_NONBLOCK;
 
+} /* EXTERN C */
 /****************************************************************************************
                          IMPLEMENTATION-SPECIFIC ROUTINES
              These are specific to this particular operating system
@@ -101,3 +105,4 @@ int32 OS_QT_StreamAPI_Impl_Init(void)
 
     return OS_SUCCESS;
 } /* end OS_QT_StreamAPI_Impl_Init */
+
