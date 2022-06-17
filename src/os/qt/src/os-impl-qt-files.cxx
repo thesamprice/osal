@@ -43,11 +43,11 @@
  */
 #include <string.h>
 #include <errno.h>
-
-#include "os-impl-files.h"
-#include "os-shared-file.h"
-#include "os-shared-idmap.h"
-
+extern "C" {
+    #include "os-impl-files.h"
+    #include "os-shared-file.h"
+    #include "os-shared-idmap.h"
+}
 /****************************************************************************************
                                      DEFINES
  ***************************************************************************************/

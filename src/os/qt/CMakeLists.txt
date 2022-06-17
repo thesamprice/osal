@@ -172,6 +172,7 @@ set_target_properties(osal_qt_impl
    CXX_EXTENSIONS off
     )
 target_link_libraries(osal_qt_impl 
+PUBLIC 
     Qt5::Core
     )
 #qt5_use_package(osal_qt_impl Core)

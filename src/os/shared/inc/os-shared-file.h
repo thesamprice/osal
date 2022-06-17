@@ -28,6 +28,7 @@
 
 #include "osapi-file.h"
 #include "os-shared-globaldefs.h"
+#include "osconfig.h"
 
 typedef struct
 {
