@@ -9,8 +9,9 @@ find_package(Qt5 COMPONENTS Core )
 
 # Linux system libraries required for the final link of applications using OSAL
 target_link_libraries(osal_bsp
-    pthread dl 
-    Qt5::Core
+#    pthread 
+  dl 
+  Qt5::Core
 )
 
 # C flags that should be used when (re-) compiling code for unit testing.
@@ -20,6 +21,11 @@ target_link_libraries(osal_bsp
 # Note - although GCC understands the same flags for compile and link here, this may
 # not be true on all platforms so the compile and link flags are specified separately.
 if (NOT CMAKE_CROSSCOMPILING)
-  set(UT_COVERAGE_COMPILE_FLAGS -pg --coverage)
-  set(UT_COVERAGE_LINK_FLAGS    -pg --coverage)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(UT_COVERAGE_COMPILE_FLAGS  --coverage) # Mac doesnt like -pg
+    set(UT_COVERAGE_LINK_FLAGS     --coverage)
+  else()
+    set(UT_COVERAGE_COMPILE_FLAGS -pg --coverage) # Mac doesnt like -pg
+    set(UT_COVERAGE_LINK_FLAGS    -pg --coverage)
+  endif()
 endif()
