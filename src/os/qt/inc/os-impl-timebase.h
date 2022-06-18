@@ -41,7 +41,7 @@ typedef struct
 {
     int start_ms;
     int interval_ms;
-    QTimer timer;
+    QTimer *timer;
     QMutex *handler_mutex;
     QWaitCondition sigWaiter;
     QMutex        sigMutex;

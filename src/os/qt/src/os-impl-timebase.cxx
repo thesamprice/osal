@@ -300,7 +300,7 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
     local       = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
     timebase    = OS_OBJECT_TABLE_GET(OS_timebase_table, *token);
     return_code = OS_SUCCESS;
-    return OS_ERR_NOT_IMPLEMENTED;
+    // return OS_ERR_NOT_IMPLEMENTED;
 
     /* There is only something to do here if we are generating a simulated tick */
 
@@ -310,16 +310,20 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
     ** Convert from Microseconds to timespec structures
     */
 
+
+    OSALThread::connect(local->timer, &QTimer::timeout, 
+                        local->handler_thread.thread,    &OSALThread::run);
+
     /*
     ** Program the real timer
     */
-    local->timer.setInterval(local->interval_ms);
-    local->timer.start();
-    if (status < 0)
-    {
-        OS_DEBUG("Error in timer_settime: %s\n", strerror(errno));
-        return_code = OS_TIMER_ERR_INTERNAL;
-    }
+    local->timer->setInterval(local->interval_ms);
+    local->timer->start();
+    // if (status < 0)
+    // {
+    //     OS_DEBUG("Error in timer_settime: %s\n", strerror(errno));
+    //     return_code = OS_TIMER_ERR_INTERNAL;
+    // }
 
     /* QT is good at milisecond level, on windows i think its 15miliseconds 
     * 1000 us in a mili sec
@@ -349,8 +353,8 @@ int32 OS_TimeBaseDelete_Impl(const OS_object_token_t *token)
     /*
     ** Delete the timer
     */
-    local->timer.stop();
-    if (local->timer.isActive() == true )
+    local->timer->stop();
+    if (local->timer->isActive() == true )
     {
         OS_DEBUG("Error deleting timer\n");
         return (OS_TIMER_ERR_INTERNAL);
@@ -466,6 +470,8 @@ int32 OS_QT_TimeBaseAPI_Impl_Init(void)
         ** Constructs a new mutex. The mutex is created in an unlocked state.
         */
         OS_impl_timebase_table[idx].handler_mutex = new QMutex();
+        OS_impl_timebase_table[idx].timer = new QTimer();
+        OS_impl_timebase_table[idx].handler_thread.thread = new OSALThread();
 
     }
 

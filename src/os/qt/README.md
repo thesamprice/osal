@@ -4,7 +4,7 @@ From root dir run
 ``` bash
 mkdir build_osal_test
 cd build_osal_test
-cmake -DENABLE_UNIT_TESTS=true -DOSAL_SYSTEM_BSPTYPE=generic-qt -DOSAL_CONFIG_DEBUG_PERMISSIVE_MODE=TRUE ..
+cmake -DENABLE_UNIT_TESTS=true -DCMAKE_BUILD_TYPE=Debug -DOSAL_SYSTEM_BSPTYPE=generic-qt -DOSAL_CONFIG_DEBUG_PERMISSIVE_MODE=TRUE ..
 make
 make test
 ```

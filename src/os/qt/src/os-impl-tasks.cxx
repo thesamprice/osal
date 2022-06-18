@@ -190,7 +190,7 @@ int32 OS_TaskDetach_Impl(const OS_object_token_t *token)
  * Function: OS_TaskMatch_Impl
  *
  *  Purpose: Implemented per internal OSAL API
- *           See prototype for argument/return detail
+*    Returns: OS_SUCCESS on match, any other code on non-match
  *
  *-----------------------------------------------------------------*/
 int32 OS_TaskMatch_Impl(const OS_object_token_t *token)
@@ -199,12 +199,11 @@ int32 OS_TaskMatch_Impl(const OS_object_token_t *token)
 
     impl = OS_OBJECT_TABLE_GET(OS_impl_task_table, *token);
 
-    /* TODO */
-    // if (pthread_equal(pthread_self(), impl->id) == 0)
-    // {
-    //     return OS_ERROR;
-    // }
-    return OS_ERR_NOT_IMPLEMENTED;
+    if(impl->thread == QThread::currentThread()){
+        return OS_SUCCESS;
+    }
+    return -1;
+
 
 } /* end OS_TaskMatch_Impl */
 
@@ -334,26 +333,23 @@ int32 OS_TaskSetPriority_Impl(const OS_object_token_t *token, osal_priority_t ne
  *-----------------------------------------------------------------*/
 int32 OS_TaskRegister_Impl(osal_id_t global_task_id)
 {
-    // int32                return_code;
-    // OS_U32ValueWrapper_t arg;
-
-    // arg.opaque_arg = 0;
-    // arg.id         = global_task_id;
-    /* TODO */
-    return OS_ERR_NOT_IMPLEMENTED;
-
-    // return_code = pthread_setspecific(QT_GlobalVars.ThreadKey, arg.opaque_arg);
-    // if (return_code == 0)
-    // {
-    //     return_code = OS_SUCCESS;
-    // }
-    // else
-    // {
-    //     OS_DEBUG("OS_TaskRegister_Impl failed during pthread_setspecific() error=%s\n", strerror(return_code));
-    //     return_code = OS_ERROR;
-    // }
-
-    // return return_code;
+    /*
+     * This is supposed to maintain the "reverse lookup" information used
+     * to map an RTEMS task ID back into an OSAL ID.
+     *
+     * Originally this used "task variables" which got deprecated.
+     * So this changed to "task notes" which are also now deprecated in 4.11.
+     *
+     * So there is now no documented per-task thread local storage facility in RTEMS
+     * with these two options gone.  RTEMS does seem to have TLS, but there is just
+     * no published (non-deprecated) API to access it.
+     *
+     * Right now this does nothing and the OS_TaskGetId() must brute-force it.
+     *
+     * An alternative for performance improvements might be to use a locally maintained
+     * hash table here.
+     */
+    return OS_SUCCESS;
 } /* end OS_TaskRegister_Impl */
 
 /*----------------------------------------------------------------
@@ -852,7 +848,7 @@ int32 OS_QT_InternalTaskCreate_Impl(OS_impl_task_internal_record_t *ost, osal_pr
      */
     ost->thread->entry =entry;
     ost->thread->data = entry_arg;
-
+    ost->thread->start();
 
     /*
      ** Free the resources that are no longer needed
