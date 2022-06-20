@@ -374,7 +374,8 @@ int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
      * If no external sync function is provided then this will set up a POSIX
      * timer to locally simulate the timer tick using the CPU clock.
      */
-    if (timebase->external_sync == NULL)
+    local->simulate_flag = (timebase->external_sync == NULL);
+    if (local->simulate_flag)
     {
         sigemptyset(&local->sigset);
 

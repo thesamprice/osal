@@ -13,6 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #find_package(Qt5Widgets REQUIRED)
 find_package(Qt5 COMPONENTS Core )
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC TRUE)
 
 
 # message( FATAL_ERROR "hey ${Qt5Widgets_FOUND}   ${Qt5Widgets_INCLUDE_DIRS}"  )
@@ -106,7 +109,6 @@ set(QT_BASE_SRCLIST
     # src/os-impl-qt-gettime.cxx
 )
 
-
 # Use portable blocks for basic I/O
 set(QT_IMPL_SRCLIST
     ../portable/os-impl-posix-gettime.c
@@ -156,11 +158,15 @@ else()
     )
 endif ()
 
+qt5_wrap_cpp(QT_BASE_SRCLIST inc/os-impl-timebase.h)
+
+
 # Defines an OBJECT target named "osal_qt_impl" with selected source files
 add_library(osal_qt_impl OBJECT
     ${QT_BASE_SRCLIST}
     ${QT_IMPL_SRCLIST}
 )
+qt5_generate_moc( src/os-impl-timebase.cxx  src/os-impl-timebase.moc osal_qt_impl)
 
 # set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set( CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -stdlib=libc++")

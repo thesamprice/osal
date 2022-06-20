@@ -32,24 +32,48 @@
 #include <QThread>
 #include <QWaitCondition>
 #include <QMutex>
-
-
+#include <QTimer>
+#include <QSemaphore>
+#include "common_types.h"
 #include <list>
+
+
+
+class QTimerThread : public QObject
+{
+    Q_OBJECT
+public:
+    QTimerThread();
+
+private slots:
+    void started();
+    void timeout();
+
+public:
+    osal_id_t timebase_id;
+    QThread m_workerThread;
+    QTimer m_myTimer;
+};
+
 
 
 typedef struct
 {
     int start_ms;
     int interval_ms;
-    QTimer *timer;
-    QMutex *handler_mutex;
+    QTimerThread *timer_thread;
     QWaitCondition sigWaiter;
-    QMutex        sigMutex;
-
-    OS_impl_task_internal_record_t handler_thread;
+    QMutex *sigMutex;
+    QMutex *handler_mutex;
+    QSemaphore *tick_sem;
+    // OS_impl_task_internal_record_t handler_thread;
     // pthread_t       handler_thread;
     char name[OS_MAX_API_NAME];
-    sig_atomic_t    reset_flag;
+    uint8          reset_flag;
+    uint8          simulate_flag;
+    uint32         configured_start_time;
+    uint32         configured_interval_time;
+
     // struct timespec softsleep;
 
 } OS_impl_timebase_internal_record_t;

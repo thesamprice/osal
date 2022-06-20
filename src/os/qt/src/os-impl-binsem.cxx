@@ -294,8 +294,14 @@ int32 OS_BinSemGive_Impl(const OS_object_token_t *token)
     {
         return (OS_SEM_FAILURE);
     }
-    
+    sem->mut->lock();
+    sem->num_waiting -= 1;
+    if(sem->num_waiting < 0)
+        sem->num_waiting  = 0;
+
+
     sem->sem->release(1);
+    sem->mut->unlock();
 
     // /* Binary semaphores are always set as "1" when given */
     // sem->current_value = 1;
@@ -328,7 +334,7 @@ int32 OS_BinSemFlush_Impl(const OS_object_token_t *token)
     // }
     sem->mut->lock();
     if(sem->num_waiting > 0) {
-        sem->sem->release(sem->num_waiting);
+        sem->sem->release(sem->num_waiting + 1);
         sem->num_waiting = 0;
     }
     sem->mut->unlock();
@@ -375,11 +381,6 @@ static int32 OS_GenericBinSemTake_Impl(const OS_object_token_t *token, const str
         got_sem = true;
     }
 
-    sem->mut->lock();
-    sem->num_waiting -= 1;
-    if(sem->num_waiting < 0)
-        sem->num_waiting  = 0;
-    sem->mut->unlock();
 
 
     if(got_sem == true)
