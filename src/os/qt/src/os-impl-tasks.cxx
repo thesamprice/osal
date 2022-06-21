@@ -32,7 +32,7 @@
 #include "os-qt.h"
 #include "bsp-impl.h"
 #include <sched.h>
-
+#include "os-qt.h"
 
 extern "C" {
 #include "os-impl-tasks.h"

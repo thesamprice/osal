@@ -36,6 +36,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+extern "C" {
+
+
 #include "generic_linux_bsp_internal.h"
 
 OS_BSP_GenericLinuxGlobalData_t OS_BSP_GenericLinuxGlobal;
@@ -183,6 +186,8 @@ void OS_BSP_Shutdown_Impl(void)
     abort();
 }
 
+} /* Extern "C" */
+
 
 #include <QtCore>
 
@@ -195,7 +200,12 @@ public:
 public slots:
     void run()
     {
-        // Do processing here
+        /*
+        * OS_Application_Run() implements the background task.
+        * The user application may provide this, or a default implementation
+        * is used which just calls OS_IdleLoop().
+        */
+        OS_Application_Run();
 
         emit finished();
     }
@@ -204,25 +214,7 @@ signals:
     void finished();
 };
 
-#include "main.moc"
-
-int main(int argc, char *argv[])
-{
-    QCoreApplication a(argc, argv);
-
-    // Task parented to the application so that it
-    // will be deleted by the application.
-    Task *task = new Task(&a);
-
-    // This will cause the application to exit when
-    // the task signals finished.    
-    QObject::connect(task, SIGNAL(finished()), &a, SLOT(quit()));
-
-    // This will run the task from the application event loop.
-    QTimer::singleShot(0, task, SLOT(run()));
-
-    return a.exec();
-}
+#include "bsp_start.moc"
 
 /******************************************************************************
 **  Function:  main()
@@ -279,12 +271,21 @@ int main(int argc, char *argv[])
      */
     OS_Application_Startup();
 
-    /*
-     * OS_Application_Run() implements the background task.
-     * The user application may provide this, or a default implementation
-     * is used which just calls OS_IdleLoop().
-     */
-    OS_Application_Run();
+
+    QCoreApplication a(argc, argv);
+
+    // Task parented to the application so that it
+    // will be deleted by the application.
+    Task *task = new Task(&a);
+
+    // This will cause the application to exit when
+    // the task signals finished.    
+    QObject::connect(task, SIGNAL(finished()), &a, SLOT(quit()));
+
+    // This will run the task from the application event loop.
+    QTimer::singleShot(0, task, SLOT(run()));
+
+    return a.exec();
 
     /* Should typically never get here */
     return OS_BSP_GetReturnStatus();

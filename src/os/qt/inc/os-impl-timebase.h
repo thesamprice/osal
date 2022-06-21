@@ -36,36 +36,46 @@
 #include <QSemaphore>
 #include "common_types.h"
 #include <list>
+#include "os-qt.h"
 
 
-
-class QTimerThread : public QObject
-{
-    Q_OBJECT
-public:
-    QTimerThread();
-
-private slots:
-    void started();
-    void timeout();
-
-public:
-    osal_id_t timebase_id;
-    QThread m_workerThread;
-    QTimer m_myTimer;
+class OS_QTimeThread : public QThread {
+    public:
+        virtual void run();
+        osal_id_t *timebase_id;
 };
 
-
-
-typedef struct
+class OS_QTimeBase : public QObject
 {
-    int start_ms;
+
+    Q_OBJECT
+public:
+    OS_QTimeBase();
+
+private slots:
+    void timeout();
+    void startTimer();
+public:
+    void start();
+    void stop();
+    osal_id_t timebase_id;
+
+    OS_QTimeThread thread;
+    QThread timer_thread;
     int interval_ms;
-    QTimerThread *timer_thread;
-    QWaitCondition sigWaiter;
-    QMutex *sigMutex;
-    QMutex *handler_mutex;
-    QSemaphore *tick_sem;
+    QTimer timer;
+    QSemaphore tick_sem;
+
+    // void * data;
+    // PthreadFuncPtr_t entry;
+
+
+    int start_ms;
+
+    // QWaitCondition sigWaiter;
+    // QMutex *sigMutex;
+    QMutex handler_mutex;
+
     // OS_impl_task_internal_record_t handler_thread;
     // pthread_t       handler_thread;
     char name[OS_MAX_API_NAME];
@@ -76,12 +86,12 @@ typedef struct
 
     // struct timespec softsleep;
 
-} OS_impl_timebase_internal_record_t;
+} ;
 
 /****************************************************************************************
                                    GLOBAL DATA
  ***************************************************************************************/
 
-extern OS_impl_timebase_internal_record_t OS_impl_timebase_table[OS_MAX_TIMEBASES];
+extern OS_QTimeBase * OS_impl_timebase_table[OS_MAX_TIMEBASES];
 
 #endif /* INCLUDE_OS_IMPL_TIMEBASE_H_ */

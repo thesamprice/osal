@@ -3,14 +3,25 @@
 # CMAKE build recipe for LINUX Board Support Package (BSP)
 #
 ######################################################################
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+find_package(Qt5 COMPONENTS Core )
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC TRUE)
+
 
 # This basic implementation library should be generic enough to use
 # on any Linux-based processor board, as well as a standard development PC.
 add_library(osal_generic-qt_impl OBJECT
-	src/bsp_start.c
+	src/bsp_start.cxx
 	src/bsp_console.c
 )
 
+target_link_libraries(osal_generic-qt_impl
+	PUBLIC
+    Qt5::Core
+)
 # OSAL needs conformance to at least POSIX.1c (aka POSIX 1995) - this includes all the
 # real-time support and threading extensions.
 #

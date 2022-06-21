@@ -34,7 +34,7 @@
                                     INCLUDE FILES
  ***************************************************************************************/
 
-#include "os-qt.h"
+
 #include "os-impl-timebase.h"
 extern "C" {
 
@@ -73,11 +73,13 @@ static int64 OS_UsecToMili(uint32 usecs);
                                      GLOBALS
  ***************************************************************************************/
 
-OS_impl_timebase_internal_record_t OS_impl_timebase_table[OS_MAX_TIMEBASES];
+OS_QTimeBase *OS_impl_timebase_table[OS_MAX_TIMEBASES];
 
 /****************************************************************************************
                                 INTERNAL FUNCTIONS
  ***************************************************************************************/
+
+
 
 void OS_UsecsToTicks(uint32 usecs, int *ticks)
 {
@@ -86,26 +88,58 @@ void OS_UsecsToTicks(uint32 usecs, int *ticks)
         *ticks = 1;
 }
 
-QTimerThread::QTimerThread()
-{
-    moveToThread(&m_workerThread);
-
-    connect(&m_workerThread, SIGNAL(started()), this, SLOT(started()));
-    connect(&m_myTimer, SIGNAL(timeout()), this, SLOT(timeout()));
-
-    m_myTimer.setInterval(1000);
-    m_myTimer.moveToThread(&m_workerThread);
+void OS_QTimeThread::run(){
+    OS_TimeBase_CallbackThread(*timebase_id);
 }
 
-void QTimerThread::started()
+OS_QTimeBase::OS_QTimeBase()
 {
+    thread.timebase_id = &timebase_id;
+    interval_ms = 1;
+    name[0] = 0x0;
+    reset_flag = 0x0;
+    start_ms = 0;
+    this->moveToThread(&timer_thread);
+    timer.moveToThread(&timer_thread);
+    connect(&timer_thread, SIGNAL(started()), this, SLOT(startTimer()));
+    connect(&timer,        SIGNAL(timeout()), this, SLOT(timeout()));
+    connect(&timer_thread, SIGNAL(finished()), this, SLOT(stop()));
 
-    m_myTimer.start();
+
+    /*
+    ** create the timebase sync mutex
+    ** This gives a mechanism to synchronize updates to the timer chain with the
+    ** expiration of the timer and processing the chain.
+    ** Constructs a new mutex. The mutex is created in an unlocked state.
+    */
+    // handler_mutex = new QMutex();
+    // timer_thread = new OS_QTimeBase();
+    // sigMutex = new QMutex();
+
 }
 
-void QTimerThread::timeout()
+void OS_QTimeBase::start(){
+    timer_thread.start();
+    thread.start();
+}
+void OS_QTimeBase::stop(){
+
+    timer_thread.quit();
+    timeout(); /* Release so thread can run */
+}
+
+void OS_QTimeBase::startTimer()
 {
-    OS_TimeBase_CallbackThread(timebase_id);
+    timer.setInterval(interval_ms);
+    timer.start();
+
+}
+
+
+void OS_QTimeBase::timeout()
+{
+    if(tick_sem.available() == 0)
+        tick_sem.release(1);
 }
 
 
@@ -140,10 +174,10 @@ extern "C" {
 void OS_TimeBaseLock_Impl(const OS_object_token_t *token)
 {
 
-    OS_impl_timebase_internal_record_t *impl;
+    OS_QTimeBase *impl;
 
-    impl = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
-    impl->handler_mutex->lock();
+    impl = *OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    impl->handler_mutex.lock();
     
 } /* end OS_TimeBaseLock_Impl */
 
@@ -158,67 +192,12 @@ void OS_TimeBaseLock_Impl(const OS_object_token_t *token)
 void OS_TimeBaseUnlock_Impl(const OS_object_token_t *token)
 {
 
-    OS_impl_timebase_internal_record_t *impl;
+    OS_QTimeBase *impl;
 
-    impl = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
-    impl->handler_mutex->unlock();
+    impl = *OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    impl->handler_mutex.unlock();
 } /* end OS_TimeBaseUnlock_Impl */
 
-// /*----------------------------------------------------------------
-//  *
-//  * Function: OS_TimeBase_SoftWaitImpl
-//  *
-//  *  Purpose: Local helper routine, not part of OSAL API.
-//  *
-//  *-----------------------------------------------------------------*/
-// static uint32 OS_TimeBase_SigWaitImpl(osal_id_t obj_id)
-// {
-//     bool                                 ret;
-//     OS_object_token_t                   token;
-//     OS_impl_timebase_internal_record_t *impl;
-//     OS_timebase_internal_record_t *     timebase;
-//     uint32                              interval_time;
-
-//     interval_time = 0;
-
-//     if (OS_ObjectIdGetById(OS_LOCK_MODE_NONE, OS_OBJECT_TYPE_OS_TIMEBASE, obj_id, &token) == OS_SUCCESS)
-//     {
-//         impl     = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, token);
-//         timebase = OS_OBJECT_TABLE_GET(OS_timebase_table, token);
-
-//         impl->sigMutex.lock();
-//         ret = impl->sigWaiter.wait(&impl->sigMutex);
-//         impl->sigMutex.unlock();
-
-//         if (ret == false)
-//         {
-//             /*
-//              * the sigwait call failed.
-//              * returning 0 will cause the process to repeat.
-//              */
-//         }
-//         else if (impl->reset_flag == 0)
-//         {
-//             /*
-//              * Normal steady-state behavior.
-//              * interval_time reflects the configured interval time.
-//              */
-//             interval_time = timebase->nominal_interval_time;
-//         }
-//         else
-//         {
-//             /*
-//              * Reset/First interval behavior.
-//              * timer_set() was invoked since the previous interval occurred (if any).
-//              * interval_time reflects the configured start time.
-//              */
-//             interval_time    = timebase->nominal_start_time;
-//             impl->reset_flag = 0;
-//         }
-//     }
-
-//     return interval_time;
-// } /* end OS_TimeBase_SoftWaitImpl */
 
 /****************************************************************************************
                                 INITIALIZATION FUNCTION
@@ -229,14 +208,6 @@ void OS_TimeBaseUnlock_Impl(const OS_object_token_t *token)
                                    Time Base API
  ***************************************************************************************/
 
-static void *OS_TimeBasePthreadEntry(void *arg)
-{
-    OS_VoidPtrValueWrapper_t local_arg;
-    
-    local_arg.opaque_arg = arg;
-    OS_TimeBase_CallbackThread(local_arg.id);
-    return NULL;
-}
 
 /*----------------------------------------------------------------
  *
@@ -249,19 +220,19 @@ static void *OS_TimeBasePthreadEntry(void *arg)
 static uint32 OS_TimeBase_WaitImpl(osal_id_t timebase_id)
 {
     OS_object_token_t                   token;
-    OS_impl_timebase_internal_record_t *impl;
+    OS_QTimeBase *impl;
     uint32                              tick_time;
 
     tick_time = 0;
 
     if (OS_ObjectIdGetById(OS_LOCK_MODE_NONE, OS_OBJECT_TYPE_OS_TIMEBASE, timebase_id, &token) == OS_SUCCESS)
     {
-        impl = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, token);
+        impl = *OS_OBJECT_TABLE_GET(OS_impl_timebase_table, token);
 
         /*
          * Pend for the tick arrival
          */
-        impl->tick_sem->acquire(1);
+        impl->tick_sem.acquire(1);
 
 
         /*
@@ -299,11 +270,11 @@ int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
     int32                               return_code = OS_SUCCESS;
     // struct sigevent                     evp;
     // struct timespec                     ts;
-    OS_impl_timebase_internal_record_t *local;
+    OS_QTimeBase *local;
     OS_timebase_internal_record_t *     timebase;
     OS_VoidPtrValueWrapper_t                arg;
 
-    local    = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    local    = *OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
     timebase = OS_OBJECT_TABLE_GET(OS_timebase_table, *token);
 
 
@@ -337,12 +308,6 @@ int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
     arg.opaque_arg = NULL;
     arg.id         = OS_ObjectIdFromToken(token);
 
-    local->timer_thread = new QTimerThread();
-    if (local->timer_thread == NULL)
-    {
-        return OS_ERROR;
-    }
-
 
 
 
@@ -360,14 +325,14 @@ int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
 int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uint32 interval_time)
 {
     OS_VoidPtrValueWrapper_t            user_data;
-    OS_impl_timebase_internal_record_t *local;
+    OS_QTimeBase *local;
     // struct itimerspec                   timeout;
     int32                               return_code;
     int                                 status;
     OS_timebase_internal_record_t *     timebase;
     int                      start_ticks;
 
-    local       = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    local       = *OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
     timebase    = OS_OBJECT_TABLE_GET(OS_timebase_table, *token);
     return_code = OS_SUCCESS;
     if (local->simulate_flag)
@@ -408,8 +373,7 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
 
             user_data.opaque_arg = NULL;
             user_data.id         = OS_ObjectIdFromToken(token);
-            local->timer_thread->timebase_id = OS_ObjectIdFromToken(token);
-            local->timer_thread->m_workerThread.start();
+            local->timebase_id =  OS_ObjectIdToInteger(OS_ObjectIdFromToken(token));
 
             {
                 local->configured_start_time    = (10000 * start_ticks) / OS_SharedGlobalVars.TicksPerSecond;
@@ -439,6 +403,8 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
                     timebase->accuracy_usec = local->configured_start_time;
                 }
             }
+
+            local->start();
         }
     }
 
@@ -460,19 +426,19 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
 int32 OS_TimeBaseDelete_Impl(const OS_object_token_t *token)
 {
 
-    OS_impl_timebase_internal_record_t *local;
+    OS_QTimeBase *local;
 
-    local = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    local = *OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
 
     /*
     ** Delete the timer
     */
-    local->timer_thread->m_myTimer.stop();
-    if (local->timer_thread->m_myTimer.isActive() == true )
-    {
-        OS_DEBUG("Error deleting timer\n");
-        return (OS_TIMER_ERR_INTERNAL);
-    }
+    local->stop();
+    // if (local->timer->isActive() == true )
+    // {
+    //     OS_DEBUG("Error deleting timer\n");
+    //     return (OS_TIMER_ERR_INTERNAL);
+    // }
 
     return OS_SUCCESS;
 } /* end OS_TimeBaseDelete_Impl */
@@ -487,9 +453,9 @@ int32 OS_TimeBaseDelete_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_TimeBaseGetInfo_Impl(const OS_object_token_t *token, OS_timebase_prop_t *timer_prop)
 {
-    OS_impl_timebase_internal_record_t *local;
+    OS_QTimeBase *local;
 
-    local = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
+    local = *OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
     /* TODO figure out how to calc */
     timer_prop->accuracy = 1000;
     timer_prop->nominal_interval_time = local->interval_ms*1000;
@@ -571,22 +537,10 @@ int32 OS_QT_TimeBaseAPI_Impl_Init(void)
         /*
         ** Mark all timers as available
         */
-
+        OS_impl_timebase_table[idx] = new OS_QTimeBase();
         // OS_impl_timebase_table[idx].handler_thread = 0x0;
-        OS_impl_timebase_table[idx].interval_ms = 1;
-        OS_impl_timebase_table[idx].name[0] = 0x0;
-        OS_impl_timebase_table[idx].reset_flag = 0x0;
-        OS_impl_timebase_table[idx].start_ms = 0;
-        /*
-        ** create the timebase sync mutex
-        ** This gives a mechanism to synchronize updates to the timer chain with the
-        ** expiration of the timer and processing the chain.
-        ** Constructs a new mutex. The mutex is created in an unlocked state.
-        */
-        OS_impl_timebase_table[idx].handler_mutex = new QMutex();
-        OS_impl_timebase_table[idx].timer_thread = new QTimerThread();
-        OS_impl_timebase_table[idx].sigMutex = new QMutex();
-        OS_impl_timebase_table[idx].tick_sem = new QSemaphore();
+
+
     }
 
 

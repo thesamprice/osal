@@ -290,11 +290,10 @@ int32 OS_BinSemGive_Impl(const OS_object_token_t *token)
      */
 
     /* Lock the mutex ( not the table! ) */
-    if (OS_QT_BinSemAcquireMutex(sem->id) != OS_SUCCESS)
+    if (OS_QT_BinSemAcquireMutex(sem->mut) != OS_SUCCESS)
     {
         return (OS_SEM_FAILURE);
     }
-    sem->mut->lock();
     sem->num_waiting -= 1;
     if(sem->num_waiting < 0)
         sem->num_waiting  = 0;
@@ -328,11 +327,10 @@ int32 OS_BinSemFlush_Impl(const OS_object_token_t *token)
     sem = OS_OBJECT_TABLE_GET(OS_impl_bin_sem_table, *token);
 
     /* Lock the mutex ( not the table! ) */
-    // if (OS_QT_BinSemAcquireMutex(sem->id) != OS_SUCCESS)
-    // {
-    //     return (OS_SEM_FAILURE);
-    // }
-    sem->mut->lock();
+    if (OS_QT_BinSemAcquireMutex(sem->mut) != OS_SUCCESS)
+    {
+        return (OS_SEM_FAILURE);
+    }
     if(sem->num_waiting > 0) {
         sem->sem->release(sem->num_waiting + 1);
         sem->num_waiting = 0;
