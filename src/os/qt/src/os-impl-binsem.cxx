@@ -143,74 +143,14 @@ int32 OS_BinSemCreate_Impl(const OS_object_token_t *token, uint32 initial_value,
     sem           = OS_OBJECT_TABLE_GET(OS_impl_bin_sem_table, *token);
     memset(sem, 0, sizeof(*sem));
     sem->sem = new QSemaphore(initial_value);
+    // sem->sem2 = new QWaitCondition();
     sem->mut = new QMutex();
     sem->num_waiting = 0;
+    sem->num_avail = 1;
     if(sem->sem == NULL){
         return_code = OS_ERROR;
     }
-    // do
-    // {
- 
 
-    //     /* After this point, the attr object should be destroyed before return */
-    //     attr_created = 1;
-
-    //     /*
-    //      ** Initialize the mutex that is used with the condition variable
-    //      */
-    //     sem->id = new QMutex();
-    //     if(sem->id == NULL){
-    //         OS_DEBUG("Error: qmutex failed: %s\n", strerror(-1));
-    //         return_code = OS_SEM_FAILURE;
-    //         break;
-    //     }
-    //     mutex_created = 1;
-
-    //     /*
-    //      ** Initialize the condition variable
-    //      */
-    //     sem->cv = new QWaitCondition();        
-    //     if (sem->cv==  NULL)
-    //     {
-    //         OS_DEBUG("Error: pthread_cond_init failed: \n");
-    //         return_code = OS_SEM_FAILURE;
-    //         break;
-    //     }
-
-    //     cond_created = 1;
-
-    //     /*
-    //      ** fill out the proper OSAL table fields
-    //      */
-
-    //     sem->current_value = initial_value;
-
-    //     return_code = OS_SUCCESS;
-    // } while (0);
-
-    // /* Clean up resources if the operation failed */
-    // if (return_code != OS_SUCCESS)
-    // {
-    //     if (mutex_created)
-    //     {
-    //         delete sem->id;
-    //         sem->id = NULL;
-    //     }
-    //     if (cond_created)
-    //     {
-    //         delete sem->cv;
-    //         sem->cv = NULL;
-    //     }
-    // }
-
-    // if (attr_created)
-    // {
-    //     /* Done with the attribute object -
-    //      * this call is a no-op in linux - but for other implementations if
-    //      * the create call allocated something this should free it
-    //      */
-    //     // pthread_mutexattr_destroy(&mutex_attr);
-    // }
 
     return return_code;
 
@@ -294,12 +234,19 @@ int32 OS_BinSemGive_Impl(const OS_object_token_t *token)
     {
         return (OS_SEM_FAILURE);
     }
-    sem->num_waiting -= 1;
-    if(sem->num_waiting < 0)
-        sem->num_waiting  = 0;
+    if(sem->num_waiting > 0){
+        sem->num_waiting -= 1;
+        if(sem->num_waiting < 0)
+            sem->num_waiting  = 0;
 
+        // sem->sem2->notify_one();
+    }
+    if(sem->sem->available() == 0)
+    {
+        sem->num_avail++;
+        sem->sem->release(1);
+    }
 
-    sem->sem->release(1);
     sem->mut->unlock();
 
     // /* Binary semaphores are always set as "1" when given */
@@ -327,14 +274,13 @@ int32 OS_BinSemFlush_Impl(const OS_object_token_t *token)
     sem = OS_OBJECT_TABLE_GET(OS_impl_bin_sem_table, *token);
 
     /* Lock the mutex ( not the table! ) */
-    if (OS_QT_BinSemAcquireMutex(sem->mut) != OS_SUCCESS)
-    {
-        return (OS_SEM_FAILURE);
-    }
-    if(sem->num_waiting > 0) {
-        sem->sem->release(sem->num_waiting + 1);
-        sem->num_waiting = 0;
-    }
+    sem->mut->lock();
+        if(sem->num_waiting > 0) {
+            // sem->sem2->wakeAll();
+            sem->sem->release(sem->num_waiting + 1);
+            sem->num_waiting = 0;
+        }
+        sem->num_avail = 1;
     sem->mut->unlock();
 
     // /* increment the flush counter.  Any other threads that are
@@ -366,92 +312,37 @@ static int32 OS_GenericBinSemTake_Impl(const OS_object_token_t *token, const str
     OS_impl_binsem_internal_record_t *sem;
 
     sem = OS_OBJECT_TABLE_GET(OS_impl_bin_sem_table, *token);
-     bool got_sem;
+     bool got_sem = false;
 
     sem->mut->lock();
-    sem->num_waiting += 1;
+        if(sem->num_avail > 0){
+            // got_sem = true;
+            sem->num_avail--;
+        }
+        sem->num_waiting += 1;
     sem->mut->unlock();
 
-    if(timeout != NULL){
-        got_sem = sem->sem->tryAcquire(1, timespec_milli(timeout));
-    }else{
-        sem->sem->acquire();
-        got_sem = true;
+    if(got_sem == false)
+    {
+        // QMutex *mutex = new QMutex();
+        // mutex->lock();
+        if(timeout != NULL){
+            // got_sem = sem->sem2->wait(mutex,  timespec_milli(timeout));
+            got_sem = sem->sem->tryAcquire(1, timespec_milli(timeout));
+        }else{
+            // sem->sem->wait(mutex);
+            sem->sem->acquire(1);
+            got_sem = true;
+        }
+        // delete mutex;
+
     }
-
-
 
     if(got_sem == true)
         return OS_SUCCESS;
     else
         return OS_SEM_FAILURE;
-//     /*
-//      * Note - this lock should be quickly available - should not delay here.
-//      * The main delay is in the pthread_cond_wait() below.
-//      */
-//     /* Lock the mutex ( not the table! ) */
-//     if (OS_QT_BinSemAcquireMutex(sem->id) != OS_SUCCESS)
-//     {
-//         return (OS_SEM_FAILURE);
-//     }
 
-//     /* because pthread_cond_wait() is also a cancellation point,
-//      * this uses a cleanup handler to ensure that if canceled during this call,
-//      * the mutex is also released */
-// // TODO    pthread_cleanup_push(OS_QT_BinSemReleaseMutex, &sem->id);
-
-//     return_code = OS_SUCCESS;
-
-//     /*
-//      * Note that for vxWorks compatibility, we need to stop pending on the semaphore
-//      * and return from this function under two possible circumstances:
-//      *
-//      *  a) the semaphore count was nonzero (may be pre-existing or due to a give)
-//      *     this is the normal case, we should decrement the count by 1 and return.
-//      *  b) the semaphore got "flushed"
-//      *     in this case ALL tasks are un-blocked and we do NOT decrement the count.
-//      */
-
-//     /*
-//      * first take a local snapshot of the flush request counter,
-//      * if it changes, we know that someone else called SemFlush.
-//      */
-//     flush_count = sem->flush_request;
-
-//     /* Note - the condition must be checked in a while loop because
-//      * even if pthread_cond_wait() returns, it does NOT guarantee that
-//      * the condition we are looking for has been met.
-//      *
-//      * Also if the current_value is already nonzero we will not wait.
-//      */
-//     while (sem->current_value == 0 && sem->flush_request == flush_count)
-//     {
-//         /* Must pend until something changes */
-//         if (timeout == NULL)
-//         {
-//             /* wait forever */
-//             sem->cv->wait(sem->id);
-//         }
-//         else if(sem->cv->wait(sem->id, timespec_milli(timeout)) == false){
-//             return_code = OS_SEM_TIMEOUT;
-//             break;
-//         }
-//     }
-
-//     /* If the flush counter did not change, set the value to zero */
-//     if (return_code == OS_SUCCESS && sem->flush_request == flush_count)
-//     {
-//         sem->current_value = 0;
-//     }
-
-//     /*
-//      * Pop the cleanup handler.
-//      * Passing "true" means it will be executed, which
-//      * handles releasing the mutex.
-//      */
-//     // TODO pthread_cleanup_pop(true);
-
-//     return return_code;
 } /* end OS_GenericBinSemTake_Impl */
 
 /*----------------------------------------------------------------

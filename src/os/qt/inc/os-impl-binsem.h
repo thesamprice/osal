@@ -35,10 +35,11 @@
 typedef struct
 {
     QMutex         * id;
-    QWaitCondition * cv;
+    // QWaitCondition * sem2;
     QSemaphore * sem;
     QMutex * mut;
     int num_waiting;
+    int num_avail;
     volatile sig_atomic_t flush_request;
     volatile sig_atomic_t current_value;
 } OS_impl_binsem_internal_record_t;

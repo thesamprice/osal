@@ -235,6 +235,7 @@ int32 OS_TaskDelete_Impl(const OS_object_token_t *token)
 
     /* TODO ... Decide proper way to stop the task */
     impl->thread->quit();
+    
     impl->thread->requestInterruption();
     impl->thread->wait(100);
     impl->thread->terminate();

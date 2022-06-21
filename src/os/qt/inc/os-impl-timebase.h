@@ -55,9 +55,11 @@ public:
 private slots:
     void timeout();
     void startTimer();
+public slots:
+    void stop();
 public:
     void start();
-    void stop();
+
     osal_id_t timebase_id;
 
     OS_QTimeThread thread;

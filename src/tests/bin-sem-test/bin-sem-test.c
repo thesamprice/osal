@@ -168,6 +168,9 @@ void BinSemCheck(void)
 
     OS_TaskDelay(100);
 
+    status = OS_BinSemGetInfo(bin_sem_id, &bin_sem_prop);
+    UtAssert_True(status == OS_SUCCESS, "BinSem value=%d Rc=%d", (int)bin_sem_prop.value, (int)status);
+
     /* Confirm that the semaphore itself is still operational after task deletion */
     status = OS_BinSemGive(bin_sem_id);
     UtAssert_True(status == OS_SUCCESS, "BinSem give Rc=%d", (int)status);
