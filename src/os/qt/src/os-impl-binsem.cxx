@@ -167,7 +167,7 @@ int32 OS_BinSemCreate_Impl(const OS_object_token_t *token, uint32 initial_value,
 int32 OS_BinSemDelete_Impl(const OS_object_token_t *token)
 {
     OS_impl_binsem_internal_record_t *sem;
-    int32                             return_code;
+    int32  return_code = OS_SUCCESS;
 
     sem = OS_OBJECT_TABLE_GET(OS_impl_bin_sem_table, *token);
     if(sem->sem)

@@ -45,6 +45,7 @@ void BinSemCheck(void);
 
 uint32    task_1_stack[TASK_1_STACK_SIZE];
 osal_id_t task_1_id;
+int task_1_running = 1;
 uint32    task_1_failures;
 uint32    task_2_stack[TASK_2_STACK_SIZE];
 osal_id_t task_2_id;
@@ -112,7 +113,7 @@ void task_1(void)
     OS_TaskDelay(1000);
 
     /* if failures occur, do not loop endlessly */
-    while (task_1_failures < 20)
+    while (task_1_failures < 20 && task_1_running == 1)
     {
 
         status = OS_BinSemTake(bin_sem_id);
@@ -160,6 +161,9 @@ void BinSemCheck(void)
     memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
 
     /* Delete the task, which should be pending in OS_BinSemTake() */
+    task_1_running = 0;
+    OS_TaskDelay(100); /* Allow task_1 to gracefully stop */
+
     status = OS_TaskDelete(task_1_id);
     UtAssert_True(status == OS_SUCCESS, "OS_TaskDelete Rc=%d", (int)status);
 

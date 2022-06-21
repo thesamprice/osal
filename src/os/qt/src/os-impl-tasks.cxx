@@ -235,11 +235,25 @@ int32 OS_TaskDelete_Impl(const OS_object_token_t *token)
 
     /* TODO ... Decide proper way to stop the task */
     impl->thread->quit();
-    
-    impl->thread->requestInterruption();
     impl->thread->wait(100);
-    impl->thread->terminate();
-    impl->thread->wait();
+    if(impl->thread->isRunning()){
+        printf("Thread quit failed\n");
+        impl->thread->exit();
+        impl->thread->wait(100);
+    }
+    if(impl->thread->isRunning()){
+        printf("Thread exit failed\n");
+
+        impl->thread->requestInterruption();
+        impl->thread->wait(100);
+    }
+    if(impl->thread->isRunning()){
+        printf("Thread requestInterruption failed\n");
+        
+        impl->thread->terminate();
+        impl->thread->wait();
+
+    }
 
     delete impl->thread;
 

@@ -92,7 +92,7 @@ int32 OS_CountSemCreate_Impl(const OS_object_token_t *token, uint32 sem_initial_
         return OS_INVALID_SEM_VALUE;
     }
 
-    impl->id = new QSemaphore();
+    impl->id = new QSemaphore(sem_initial_value);
     if(impl->id == NULL)
     {
         return OS_SEM_FAILURE;
