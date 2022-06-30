@@ -168,12 +168,18 @@ void QtAddressPort_To_OS_Address(const QHostAddress &addr, int port, OS_SockAddr
     sa = (struct sockaddr *)&os_addr->AddrData;
     struct sockaddr_in *sin = (struct sockaddr_in *)sa;
     sin->sin_port = ntohs(port);
+    
+
+
     if(sizeof(sin->sin_addr) ==4 ){
         int32_t ip4 = addr.toIPv4Address();
+        ip4 = htonl(ip4);
         memcpy(&sin->sin_addr,&ip4, 4 );
+        sa->sa_family = AF_INET;
     }else{
         Q_IPV6ADDR ip6 = addr.toIPv6Address();
         memcpy(&sin->sin_addr,&ip6, sizeof(sin->sin_addr));
+        sa->sa_family = AF_INET6;
     }
     
 
@@ -398,6 +404,7 @@ int32 OS_SocketConnect_Impl(const OS_object_token_t *token, const OS_SockAddr_t 
          /* See https://doc.qt.io/qt-6/qabstractsocket.html#connectToHost */
         // impl->generic->bind(host_addr, port);
         impl->generic->connectToHost(host_addr, port);
+
         if (impl->generic->waitForConnected(timeout) == false)
         {
             OS_DEBUG("connect: %s\n", impl->generic->errorString().toLocal8Bit().data() );
@@ -797,8 +804,11 @@ int32 OS_SocketAddrToString_Impl(char *buffer, size_t buflen, const OS_SockAddr_
     QHostAddress qaddr = OS_Address_To_QtAddress(Addr);
     int port = OS_Address_To_Port(Addr);
     QString str_addr = QString("%1:%2").arg( qaddr.toString() ).arg(port);
-    snprintf(buffer, buflen, "%s", str_addr.toStdString().c_str());
-
+    int nu_bytes = snprintf(buffer, buflen, "%s", str_addr.toStdString().c_str());
+    if(nu_bytes > buflen)
+    {
+        return OS_ERROR;
+    }
 
     return OS_SUCCESS;
 } /* end OS_SocketAddrToString_Impl */
