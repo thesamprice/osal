@@ -11,83 +11,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #find_package(Qt5Core)
 #find_package(Qt5Widgets REQUIRED)
-find_package(Qt5 COMPONENTS Core )
+find_package(Qt5 COMPONENTS Core Network)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC TRUE)
-
-
-# message( FATAL_ERROR "hey ${Qt5Widgets_FOUND}   ${Qt5Widgets_INCLUDE_DIRS}"  )
-#find_package(Qt5Widgets REQUIRED)
-# Widgets finds its own dependencies (QtGui and QtCore).
-# find_package(Qt5Widgets REQUIRED)
-
-
-#find_package(Qt5 REQUIRED COMPONENTS Core)
-# This CMake script generates targets specific to the QT implementation
-# The Qt5Widgets_INCLUDES also includes the include directories for
-# dependencies QtCore and QtGui
-#set(CMAKE_CXX_STANDARD 11)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(Qt5_DIR "/opt/local/libexec/qt5/lib/cmake/Qt5" CACHE PATH "Initial cahe" FORCE)
-# set_target_properties(Qt5::Core PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE "RELEASE")
-
-
-# Set up Qt
-# set(CMAKE_AUTOMOC ON)
-# set(CMAKE_AUTOUIC ON)
-# set(CMAKE_AUTORCC ON)
-
-# set(CMAKE_INCLUDE_CURRENT_DIR ON)
-#find_package(Qt5Core REQUIRED)
-
-# find_package(Qt5Gui REQUIRED)
-# find_package(Qt5Widgets REQUIRED) 
-# include_directories(osal_qt_impl PUBLIC ${Qt5Core_INCLUDE_DIRS})
-# include_directories(osal_qt_impl PUBLIC /opt/local/libexec/qt5/include)
-#include_directories(osal PUBLIC ${Qt5Core_INCLUDE_DIRS})
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}
-# ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
-
-# include_directories(${Qt5Gui_INCLUDE_DIRS})
-# include_directories(${Qt5Widgets_INCLUDE_DIRS})
-#add_definitions(${Qt5Widgets_DEFINITIONS})
-
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-
-
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
-#qt5_use_modules(osal_qt_impl Core)
-#add_compile_options(-std=c++0x) # CMake 2.8.12 or newer
-#set(CMAKE_CXX_STANDARD 11)
-#set(CMAKE_CXX_STANDARD_REQUIRED on)
-#SET ( CMAKE_CXX_FLAGS "-std=c++0x" CACHE STRING "compile flags" FORCE)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC_RELAXED_MODE ON)
 
 include_directories(osal_qt_impl 
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
-   PUBLIC
-#   /Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
-#    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/
-
-
 )
-
-include_directories(osal 
-PUBLIC
-#/Users/sprice5/Qt/5.15.2/clang_64/lib/QtCore.framework/Versions/5/Headers
-)
-
-
-
-
-
-# We need add -DQT_WIDGETS_LIB when using QtWidgets in Qt 5.
-#add_definitions(${Qt5Widgets_DEFINITIONS})
-
-# Executables fail to build with Qt 5 in the default configuration
-# without -fPIE. We add that here.
-#set(CMAKE_CXX_FLAGS "${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
-
 
 # The basic set of files which are always built
 set(QT_BASE_SRCLIST
@@ -157,7 +89,7 @@ else()
     )
 endif ()
 
-qt5_wrap_cpp(QT_BASE_SRCLIST inc/os-impl-timebase.h)
+
 
 
 # Defines an OBJECT target named "osal_qt_impl" with selected source files
@@ -165,7 +97,10 @@ add_library(osal_qt_impl OBJECT
     ${QT_BASE_SRCLIST}
     ${QT_IMPL_SRCLIST}
 )
-qt5_generate_moc( src/os-impl-timebase.cxx  src/os-impl-timebase.moc osal_qt_impl)
+#qt5_wrap_cpp(QT_BASE_SRCLIST inc/os-impl-timebase.h)
+#qt5_wrap_cpp(QT_BASE_SRCLIST inc/os-impl-sockets.h)
+#qt5_generate_moc( src/os-impl-timebase.cxx  src/os-impl-timebase.moc osal_qt_impl)
+#qt5_generate_moc( src/os-impl-sockets.cxx  src/os-impl-sockets.moc osal_qt_impl)
 
 # set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set( CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -stdlib=libc++")
@@ -176,9 +111,11 @@ set_target_properties(osal_qt_impl
    CXX_STANDARD 11
    CXX_EXTENSIONS off
     )
+
 target_link_libraries(osal_qt_impl 
 PUBLIC 
     Qt5::Core
+    Qt::Network
     )
 #qt5_use_package(osal_qt_impl Core)
 

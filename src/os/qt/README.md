@@ -9,7 +9,7 @@ make
 make test
 ```
 ## Rational 
-THis is an experimental operating attempt at using QT as a layer between osal, and the final operating system.
+This is an experimental operating attempt at using QT as a layer between osal, and the final operating system.
 
 As of 2022 QT provides the following support for the following operating systems.
 * Linux / X11
@@ -38,3 +38,20 @@ See
 
 ### Scheduler
 Scheduler needs to be manually created, and has not been done yet.
+
+### Thread stopping 
+QT has an issue where if a task_a is killed while it has a locked semaphore / mutex.
+Then task_b that unlocks the semaphore / mutex will hang.
+This is the case on mac os.  Windows may have a different semaphore implementation. 
+
+# Porting notes.
+## TimeBase
+The implementation port that I did Time base used a stand alone timer to unlock a semaphore at a periodic rate.
+
+And then a callback that would block on the semaphore being released.
+## Network sockets.
+Qt uses an underlying stream class.
+- Sockets uses the stream table
+    sock = OS_OBJECT_TABLE_GET(OS_stream_table, *token);
+    Files also use OS_stream_table
+    

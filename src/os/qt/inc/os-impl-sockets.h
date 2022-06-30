@@ -35,6 +35,9 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <QtNetwork>
+#include <QDebug>
+
 
 #define OS_NETWORK_SUPPORTS_IPV6
 
@@ -48,5 +51,24 @@
  * nonblocking I/O calls in combination with select().
  */
 #define OS_IMPL_SOCKET_FLAGS O_NONBLOCK
+
+
+
+
+
+class QServer : public QTcpServer {
+    Q_OBJECT
+public:
+    explicit QServer(QTcpSocket * _server_socket, QObject *parent = 0 );
+    ~QServer();
+    QTcpSocket *server_socket;
+public slots:
+    void tcpReady();
+    void tcpError( QAbstractSocket::SocketError error );
+    bool start_listen(int port_no);
+
+protected:
+    void incomingConnection( int descriptor );
+};
 
 #endif /* OS_IMPL_SOCKETS_H */

@@ -45,7 +45,7 @@ void BinSemCheck(void);
 
 uint32    task_1_stack[TASK_1_STACK_SIZE];
 osal_id_t task_1_id;
-int task_1_running = 1;
+volatile int task_1_running = 1;
 uint32    task_1_failures;
 uint32    task_2_stack[TASK_2_STACK_SIZE];
 osal_id_t task_2_id;

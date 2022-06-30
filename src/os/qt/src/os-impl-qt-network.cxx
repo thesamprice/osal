@@ -48,6 +48,7 @@ extern "C"{
 #include "os-shared-network.h"
 }
 
+#include <QHostInfo>
 /****************************************************************************************
                                     Network API
  ***************************************************************************************/
@@ -63,21 +64,11 @@ extern "C" {
  *-----------------------------------------------------------------*/
 int32 OS_NetworkGetHostName_Impl(char *host_name, size_t name_len)
 {
-    int32 return_code;
-
-    if (gethostname(host_name, name_len) < 0)
-    {
-        return_code = OS_ERROR;
-    }
-    else
-    {
-        /*
-         * posix does not say that the name is always
-         * null terminated, so its worthwhile to ensure it
-         */
-        host_name[name_len - 1] = 0;
-        return_code             = OS_SUCCESS;
-    }
+    int32 return_code = OS_SUCCESS;
+    QString hostname = QHostInfo::localHostName();
+    QByteArray ba = hostname.toLocal8Bit();
+    const char *c_str2 = ba.data();
+    snprintf(host_name,name_len, "%s", c_str2);
 
     return (return_code);
 } /* end OS_NetworkGetHostName_Impl */

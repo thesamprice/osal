@@ -30,6 +30,7 @@
                                     INCLUDE FILES
  ***************************************************************************************/
 
+
 /*
  * Inclusions Defined by OSAL layer.
  *
@@ -54,6 +55,7 @@
 #include <errno.h>
 
 #include "os-impl-sockets.h"
+
 extern "C" {
 
 #include "os-shared-file.h"
@@ -61,6 +63,7 @@ extern "C" {
 #include "os-shared-sockets.h"
 #include "os-shared-idmap.h"
 }
+
 
 /****************************************************************************************
                                      DEFINES
@@ -76,14 +79,107 @@ typedef union
 #endif
 } OS_SockAddr_Accessor_t;
 
-/*
- * Confirm that the abstract socket address buffer size (OS_SOCKADDR_MAX_LEN) is
- * large enough to store any of the enabled address types.  If this is true, the
- * size of the above union will match OS_SOCKADDR_MAX_LEN.  However, if any
- * implemention-provided struct types are larger than this, the union will be
- * larger, and this indicates a configuration error.
- */
-CompileTimeAssert(sizeof(OS_SockAddr_Accessor_t) == OS_SOCKADDR_MAX_LEN, SockAddrSize);
+
+
+QServer::QServer(QTcpSocket *_server_socket,QObject *parent ) : QTcpServer(parent) {
+    server_socket = _server_socket;
+    connect( server_socket, SIGNAL(error(QAbstractSocket::SocketError)),
+            this, SLOT(tcpError(QAbstractSocket::SocketError)) );
+    connect( server_socket, SIGNAL(readyRead()),
+             this, SLOT(tcpReady()) );
+    server_socket->setSocketOption(QAbstractSocket::KeepAliveOption, true );
+}
+
+QServer::~QServer() {
+    server_socket->disconnectFromHost();
+    server_socket->waitForDisconnected();
+}
+
+void QServer::tcpReady() {
+    QByteArray array = server_socket->read(server_socket->bytesAvailable());
+}
+
+void QServer::tcpError(QAbstractSocket::SocketError error) {
+    // QMessageBox::warning( (QWidget *)this->parent(), tr("Error"),tr("TCP error: %1").arg( server_socket->errorString() ) );
+}
+
+bool QServer::start_listen(int port_no) {
+    if( !this->listen( QHostAddress::Any, port_no ) ) {
+        // QMessageBox::warning( (QWidget *)this->parent(), tr("Error!"), tr("Cannot listen to port %1").arg(port_no) );
+        return false;
+    }
+    else{
+        return true;
+    }
+}
+
+void QServer::incomingConnection(int descriptor) {
+    if( !server_socket->setSocketDescriptor( descriptor ) ) {
+        // QMessageBox::warning( (QWidget *)this->parent(), tr("Error!"), tr("Socket error!") );
+        return;
+    }
+}
+
+typedef struct OS_QT_Sock_t{
+    QUdpSocket * udp;
+    QTcpSocket *tcp;
+    QAbstractSocket * generic;
+    QServer * tcp_server;
+    OS_SocketType_t socket_type;
+    // OS_SocketDomain_t socket_domain;
+    /* Socket file descriptor */
+    int fd;
+    int selectable;
+    int port;
+    QHostAddress host_addr;
+    std::string name;
+}OS_QT_Sock_t;
+
+
+/* Globals */
+
+OS_QT_Sock_t OS_impl_sockets[OS_MAX_NUM_OPEN_FILES] = {0};
+
+
+
+QHostAddress OS_Address_To_QtAddress(const OS_SockAddr_t *Addr){
+    const struct sockaddr *         sa;
+
+    sa = (const struct sockaddr *)&Addr->AddrData;
+    // struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+    // char ip[INET_ADDRSTRLEN];
+    // inet_pton (AF_INET, sin->sin_addr, ip, sizeof (ip));
+
+    QHostAddress qt_addr(sa);
+    return qt_addr;
+}
+
+uint16_t OS_Address_To_Port(const OS_SockAddr_t *Addr){
+    const struct sockaddr *         sa;
+
+    sa = (const struct sockaddr *)&Addr->AddrData;
+    struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+    uint16_t port;
+    port = htons (sin->sin_port);
+    return port;
+}
+void QtAddressPort_To_OS_Address(const QHostAddress &addr, int port, OS_SockAddr_t * os_addr){
+    struct sockaddr *         sa;
+    sa = (struct sockaddr *)&os_addr->AddrData;
+    struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+    sin->sin_port = ntohs(port);
+    if(sizeof(sin->sin_addr) ==4 ){
+        int32_t ip4 = addr.toIPv4Address();
+        memcpy(&sin->sin_addr,&ip4, 4 );
+    }else{
+        Q_IPV6ADDR ip6 = addr.toIPv6Address();
+        memcpy(&sin->sin_addr,&ip6, sizeof(sin->sin_addr));
+    }
+    
+
+
+
+}
 
 /****************************************************************************************
                                     Sockets API
@@ -104,24 +200,30 @@ int32 OS_SocketOpen_Impl(const OS_object_token_t *token)
     int                             os_type;
     int                             os_proto;
     int                             os_flags;
-    OS_impl_file_internal_record_t *impl;
-    OS_stream_internal_record_t *   stream;
+    OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
+    OS_stream_internal_record_t* stream = OS_OBJECT_TABLE_GET(OS_stream_table, *token);
 
-    impl   = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
-    stream = OS_OBJECT_TABLE_GET(OS_stream_table, *token);
 
     os_proto = 0;
 
     switch (stream->socket_type)
     {
         case OS_SocketType_DATAGRAM:
+            impl->socket_type = OS_SocketType_DATAGRAM;
             os_type  = SOCK_DGRAM;
             os_proto = IPPROTO_UDP;
+
+            impl->udp = new QUdpSocket();
+            impl->generic = impl->udp;
             break;
 
         case OS_SocketType_STREAM:
+            impl->socket_type = OS_SocketType_STREAM;
             os_type  = SOCK_STREAM;
             os_proto = IPPROTO_TCP;
+            impl->tcp        = new QTcpSocket();
+            impl->tcp_server = new QServer(impl->tcp);
+            impl->generic = impl->tcp;
             break;
 
         default:
@@ -142,46 +244,46 @@ int32 OS_SocketOpen_Impl(const OS_object_token_t *token)
             return OS_ERR_NOT_IMPLEMENTED;
     }
 
-    impl->fd = socket(os_domain, os_type, os_proto);
-    if (impl->fd < 0)
-    {
-        return OS_ERROR;
-    }
+    // impl->fd = socket(os_domain, os_type, os_proto);
+    // if (impl->fd < 0)
+    // {
+    //     return OS_ERROR;
+    // }
 
-    /*
-     * Setting the REUSEADDR flag helps during debugging when there might be frequent
-     * code restarts.  However if setting the option fails then it is not worth bailing out over.
-     */
-    os_flags = 1;
-    setsockopt(impl->fd, SOL_SOCKET, SO_REUSEADDR, &os_flags, sizeof(os_flags));
+    // /*
+    //  * Setting the REUSEADDR flag helps during debugging when there might be frequent
+    //  * code restarts.  However if setting the option fails then it is not worth bailing out over.
+    //  */
+    // os_flags = 1;
+    // setsockopt(impl->fd, SOL_SOCKET, SO_REUSEADDR, &os_flags, sizeof(os_flags));
 
-    /*
-     * Set the standard options on the filehandle by default --
-     * this may set it to non-blocking mode if the implementation supports it.
-     * any blocking would be done explicitly via the select() wrappers
-     *
-     * NOTE: The implementation still generally works without this flag set, but
-     * nonblock mode does improve robustness in the event that multiple tasks
-     * attempt to accept new connections from the same server socket at the same time.
-     */
-    os_flags = fcntl(impl->fd, F_GETFL);
-    if (os_flags == -1)
-    {
-        /* No recourse if F_GETFL fails - just report the error and move on. */
-        OS_DEBUG("fcntl(F_GETFL): %s\n", strerror(errno));
-    }
-    else
-    {
-        os_flags |= OS_IMPL_SOCKET_FLAGS;
-        if (fcntl(impl->fd, F_SETFL, os_flags) == -1)
-        {
-            /* No recourse if F_SETFL fails - just report the error and move on. */
-            OS_DEBUG("fcntl(F_SETFL): %s\n", strerror(errno));
-        }
-    }
-
+    // /*
+    //  * Set the standard options on the filehandle by default --
+    //  * this may set it to non-blocking mode if the implementation supports it.
+    //  * any blocking would be done explicitly via the select() wrappers
+    //  *
+    //  * NOTE: The implementation still generally works without this flag set, but
+    //  * nonblock mode does improve robustness in the event that multiple tasks
+    //  * attempt to accept new connections from the same server socket at the same time.
+    //  */
+    // os_flags = fcntl(impl->fd, F_GETFL);
+    // if (os_flags == -1)
+    // {
+    //     /* No recourse if F_GETFL fails - just report the error and move on. */
+    //     OS_DEBUG("fcntl(F_GETFL): %s\n", strerror(errno));
+    // }
+    // else
+    // {
+    //     os_flags |= OS_IMPL_SOCKET_FLAGS;
+    //     if (fcntl(impl->fd, F_SETFL, os_flags) == -1)
+    //     {
+    //         /* No recourse if F_SETFL fails - just report the error and move on. */
+    //         OS_DEBUG("fcntl(F_SETFL): %s\n", strerror(errno));
+    //     }
+    // }
+    // impl->generic->setSocketDescriptor(impl->fd);
     impl->selectable = OS_IMPL_SOCKET_SELECTABLE;
-
+    
     return OS_SUCCESS;
 } /* end OS_SocketOpen_Impl */
 
@@ -189,8 +291,7 @@ int32 OS_SocketOpen_Impl(const OS_object_token_t *token)
  *
  * Function: OS_SocketBind_Impl
  *
- *  Purpose: Implemented per internal OSAL API
- *           See prototype for argument/return detail
+ *  Purpose: Binds the indicated socket table entry to the passed-in address
  *
  *-----------------------------------------------------------------*/
 int32 OS_SocketBind_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Addr)
@@ -198,11 +299,9 @@ int32 OS_SocketBind_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Ad
     int                             os_result;
     socklen_t                       addrlen;
     const struct sockaddr *         sa;
-    OS_impl_file_internal_record_t *impl;
-    OS_stream_internal_record_t *   stream;
-
-    impl   = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
-    stream = OS_OBJECT_TABLE_GET(OS_stream_table, *token);
+    OS_QT_Sock_t *impl;
+    impl   = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
+    OS_stream_internal_record_t* stream = OS_OBJECT_TABLE_GET(OS_stream_table, *token);
 
     sa = (const struct sockaddr *)&Addr->AddrData;
 
@@ -225,19 +324,21 @@ int32 OS_SocketBind_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Ad
     {
         return OS_ERR_BAD_ADDRESS;
     }
+    impl->host_addr  = OS_Address_To_QtAddress(Addr);
+    uint16_t port = OS_Address_To_Port(Addr);
+    QString name = QString("%1:%2").arg(impl->host_addr.toString(), port);
+    impl->name = name.toStdString();
 
-    os_result = bind(impl->fd, sa, addrlen);
-    if (os_result < 0)
+    if(impl->generic->bind(impl->host_addr,port) == false)
     {
         OS_DEBUG("bind: %s\n", strerror(errno));
-        return OS_ERROR;
+        return OS_ERR_INCORRECT_OBJ_STATE;
     }
 
     /* Start listening on the socket (implied for stream sockets) */
     if (stream->socket_type == OS_SocketType_STREAM)
     {
-        os_result = listen(impl->fd, 10);
-        if (os_result < 0)
+        if ( impl->tcp_server->start_listen(impl->port) == false)
         {
             OS_DEBUG("listen: %s\n", strerror(errno));
             return OS_ERROR;
@@ -262,9 +363,11 @@ int32 OS_SocketConnect_Impl(const OS_object_token_t *token, const OS_SockAddr_t 
     socklen_t                       slen;
     uint32                          operation;
     const struct sockaddr *         sa;
-    OS_impl_file_internal_record_t *impl;
+    OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
 
-    impl = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
+    char ip[INET_ADDRSTRLEN];
+    uint16_t port;
+
 
     sa = (const struct sockaddr *)&Addr->AddrData;
     switch (sa->sa_family)
@@ -289,56 +392,17 @@ int32 OS_SocketConnect_Impl(const OS_object_token_t *token, const OS_SockAddr_t 
     else
     {
         return_code = OS_SUCCESS;
-        os_status   = connect(impl->fd, sa, slen);
-        if (os_status < 0)
+         QHostAddress host_addr = OS_Address_To_QtAddress(Addr);
+         uint16_t port = OS_Address_To_Port(Addr);
+         impl->port = port;
+         /* See https://doc.qt.io/qt-6/qabstractsocket.html#connectToHost */
+        // impl->generic->bind(host_addr, port);
+        impl->generic->connectToHost(host_addr, port);
+        if (impl->generic->waitForConnected(timeout) == false)
         {
-            if (errno != EINPROGRESS)
-            {
-                OS_DEBUG("connect: %s\n", strerror(errno));
-                return_code = OS_ERROR;
-            }
-            else
-            {
-                /*
-                 * If the socket was created in nonblocking mode (O_NONBLOCK flag) then the connect
-                 * runs in the background and connect() returns EINPROGRESS.  In this case we still
-                 * want to provide the "normal" (blocking) semantics to the calling app, such that
-                 * when OS_SocketConnect() returns, the socket is ready for use.
-                 *
-                 * To provide consistent behavior to calling apps, this does a select() to wait
-                 * for the socket to become writable, meaning that the remote side is connected.
-                 *
-                 * An important point here is that the calling app can control the timeout.  If the
-                 * normal/blocking connect() was used, the OS/IP stack controls the timeout, and it
-                 * can be quite long.
-                 */
-                operation = OS_STREAM_STATE_WRITABLE;
-                if (impl->selectable)
-                {
-                    return_code = OS_SelectSingle_Impl(token, &operation, timeout);
-                }
-                if (return_code == OS_SUCCESS)
-                {
-                    if ((operation & OS_STREAM_STATE_WRITABLE) == 0)
-                    {
-                        return_code = OS_ERROR_TIMEOUT;
-                    }
-                    else
-                    {
-                        /*
-                         * The SO_ERROR socket flag should also read back zero.
-                         * If not zero, something went wrong during connect
-                         */
-                        sockopt   = 0;
-                        slen      = sizeof(sockopt);
-                        os_status = getsockopt(impl->fd, SOL_SOCKET, SO_ERROR, &sockopt, &slen);
-                        if (os_status < 0 || sockopt != 0)
-                        {
-                            return_code = OS_ERROR;
-                        }
-                    }
-                }
-            }
+            OS_DEBUG("connect: %s\n", impl->generic->errorString().toLocal8Bit().data() );
+            return_code = OS_ERROR;
+
         }
     }
     return return_code;
@@ -354,35 +418,33 @@ int32 OS_SocketConnect_Impl(const OS_object_token_t *token, const OS_SockAddr_t 
  ------------------------------------------------------------------*/
 int32 OS_SocketShutdown_Impl(const OS_object_token_t *token, OS_SocketShutdownMode_t Mode)
 {
-    OS_impl_file_internal_record_t *conn_impl;
     int32                           return_code;
     int                             how;
+    return_code = OS_SUCCESS;
+    OS_QT_Sock_t *conn_impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
 
-    conn_impl = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
+    conn_impl->generic->disconnectFromHost();
+    if (conn_impl->generic->state() == QAbstractSocket::UnconnectedState){
+        /* Already disconnected */
+    }else if(conn_impl->generic->waitForDisconnected(-1) == false){
+
+        qDebug() << conn_impl->generic->errorString();
+        return_code = OS_ERROR;
+    }
+
 
     /* Note that when called via the shared layer,
      * the "Mode" arg has already been checked/validated. */
     if (Mode == OS_SocketShutdownMode_SHUT_READ)
     {
-        how = SHUT_RD;
+        return_code = 1;
     }
     else if (Mode == OS_SocketShutdownMode_SHUT_WRITE)
     {
-        how = SHUT_WR;
-    }
-    else
-    {
-        how = SHUT_RDWR;
+        return_code = 2;
     }
 
-    if (shutdown(conn_impl->fd, how) == 0)
-    {
-        return_code = OS_SUCCESS;
-    }
-    else
-    {
-        return_code = OS_ERROR;
-    }
+
 
     return return_code;
 } /* end OS_SocketShutdown_Impl */
@@ -391,8 +453,9 @@ int32 OS_SocketShutdown_Impl(const OS_object_token_t *token, OS_SocketShutdownMo
  *
  * Function: OS_SocketAccept_Impl
  *
- *  Purpose: Implemented per internal OSAL API
- *           See prototype for argument/return detail
+ *  Purpose: Accept an incoming connection on the indicated socket (must be a STREAM socket)
+ *          Will wait up to "timeout" milliseconds for an incoming connection
+ *          Will wait forever if timeout is negative
  *
  *-----------------------------------------------------------------*/
 int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_token_t *conn_token,
@@ -402,11 +465,9 @@ int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_
     uint32                          operation;
     socklen_t                       addrlen;
     int                             os_flags;
-    OS_impl_file_internal_record_t *sock_impl;
-    OS_impl_file_internal_record_t *conn_impl;
+    OS_QT_Sock_t *sock_impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *sock_token);
+    OS_QT_Sock_t *conn_impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *conn_token);
 
-    sock_impl = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *sock_token);
-    conn_impl = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *conn_token);
 
     operation = OS_STREAM_STATE_READABLE;
     if (sock_impl->selectable)
@@ -426,42 +487,20 @@ int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_
         }
         else
         {
-            addrlen       = Addr->ActualLength;
-            conn_impl->fd = accept(sock_impl->fd, (struct sockaddr *)&Addr->AddrData, &addrlen);
-            if (conn_impl->fd < 0)
+            if(timeout < 0)
+                timeout = -1; /* If msec is -1, this function will not time out. */
+            if(sock_impl->tcp_server->waitForNewConnection(timeout) == false)
             {
                 return_code = OS_ERROR;
             }
             else
             {
-                Addr->ActualLength = addrlen;
-
-                /*
-                 * Set the standard options on the filehandle by default --
-                 * this may set it to non-blocking mode if the implementation supports it.
-                 * any blocking would be done explicitly via the select() wrappers
-                 *
-                 * NOTE: The implementation still generally works without this flag set, but
-                 * nonblock mode does improve robustness in the event that multiple tasks
-                 * attempt to read from the same socket at the same time.
-                 */
-                os_flags = fcntl(conn_impl->fd, F_GETFL);
-                if (os_flags == -1)
-                {
-                    /* No recourse if F_GETFL fails - just report the error and move on. */
-                    OS_DEBUG("fcntl(F_GETFL): %s\n", strerror(errno));
+                conn_impl->tcp = sock_impl->tcp_server->nextPendingConnection();
+                if(conn_impl->tcp == 0x0){
+                    return_code = OS_ERROR;
+                }else{
+                    conn_impl->selectable = OS_IMPL_SOCKET_SELECTABLE;
                 }
-                else
-                {
-                    os_flags |= OS_IMPL_SOCKET_FLAGS;
-                    if (fcntl(conn_impl->fd, F_SETFL, os_flags) == -1)
-                    {
-                        /* No recourse if F_SETFL fails - just report the error and move on. */
-                        OS_DEBUG("fcntl(F_SETFL): %s\n", strerror(errno));
-                    }
-                }
-
-                conn_impl->selectable = OS_IMPL_SOCKET_SELECTABLE;
             }
         }
     }
@@ -480,7 +519,51 @@ int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_
 int32 OS_SocketRecvFrom_Impl(const OS_object_token_t *token, void *buffer, size_t buflen, OS_SockAddr_t *RemoteAddr,
                              int32 timeout)
 {
-    return OS_ERR_NOT_IMPLEMENTED;
+    int result = -1;
+    OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
+    quint16 port = OS_Address_To_Port(RemoteAddr);
+    QHostAddress addr = OS_Address_To_QtAddress(RemoteAddr);
+
+    if(impl->socket_type == OS_SocketType_DATAGRAM)
+    {
+        result = impl->udp->readDatagram((char*)buffer, buflen,&addr, &port);
+        QtAddressPort_To_OS_Address(addr, port, RemoteAddr);
+
+    }else{
+        impl->generic->waitForReadyRead(-1);
+        if(impl->generic->waitForReadyRead(-1) == false){
+            return OS_ERROR;
+        }
+        int bytes_read = impl->generic->read((char*)buffer,buflen);
+        if(bytes_read == -1){
+            return OS_ERROR;
+        }
+
+    }
+
+    // memcpy(buffer, data.constData(), data.size());
+    // if(RemoteAddr != 0x0){
+    //     /* TODO */
+    //     // RemoteAddr->AddrDat
+    // }
+
+
+    // switch(impl->socket_type){
+    //     case OS_SocketType_DATAGRAM:
+    //         if(impl->udp->waitForReadyRead(-1) == false){
+    //             return OS_ERROR;
+    //         }
+    //         int bytes_read = impl->udp->read((char*)buffer,buflen);
+    //         if(bytes_read == -1){
+    //             return OS_ERROR;
+    //         }
+    //         break;
+    //     case OS_SocketType_STREAM:
+
+    //         if(impl->tcp->)
+    // }
+
+    return result;
     // int32                           return_code;
     // int                             os_result;
     // int                             waitflags;
@@ -573,7 +656,28 @@ int32 OS_SocketRecvFrom_Impl(const OS_object_token_t *token, void *buffer, size_
 int32 OS_SocketSendTo_Impl(const OS_object_token_t *token, const void *buffer, size_t buflen,
                            const OS_SockAddr_t *RemoteAddr)
 {
-    return OS_ERR_NOT_IMPLEMENTED; /* TODO */
+    OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
+    int bytes_sent=0;
+    int bytes_just_sent = 0;
+    // if(impl->generic->waitForBytesWritten(-1) == false){
+    //     return OS_ERROR;
+    // }
+
+    if(impl->socket_type == OS_SocketType_DATAGRAM){
+        bytes_sent = impl->udp->writeDatagram((const char *)buffer, buflen, OS_Address_To_QtAddress(RemoteAddr), OS_Address_To_Port(RemoteAddr) );
+    }else{
+        /* TODO Check if this matches expected stream implementation */
+        bytes_sent = impl->generic->write((const char *)buffer, buflen);
+    }
+    if(bytes_sent == -1){
+        return OS_ERROR;
+    }
+
+    /* TODO Probably bugs in here from not checking bytes sent vs buflen, and not using remoteaddr */
+
+    return bytes_sent;
+
+    // return OS_ERR_NOT_IMPLEMENTED; /* TODO */
 //     int                             os_result;
 //     socklen_t                       addrlen;
 //     const struct sockaddr *         sa;
@@ -622,7 +726,12 @@ int32 OS_SocketSendTo_Impl(const OS_object_token_t *token, const void *buffer, s
  *-----------------------------------------------------------------*/
 int32 OS_SocketGetInfo_Impl(const OS_object_token_t *token, OS_socket_prop_t *sock_prop)
 {
-    return OS_SUCCESS;
+    OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
+    snprintf(sock_prop->name,sizeof(sock_prop->name), "%s", impl->name.c_str());
+
+    sock_prop->creator = -1;
+    return OS_ERR_NOT_IMPLEMENTED;
+    // return OS_SUCCESS;
 } /* end OS_SocketGetInfo_Impl */
 
 /*----------------------------------------------------------------
@@ -685,26 +794,11 @@ int32 OS_SocketAddrToString_Impl(char *buffer, size_t buflen, const OS_SockAddr_
     const OS_SockAddr_Accessor_t *Accessor;
 
     Accessor = (const OS_SockAddr_Accessor_t *)&Addr->AddrData;
+    QHostAddress qaddr = OS_Address_To_QtAddress(Addr);
+    int port = OS_Address_To_Port(Addr);
+    QString str_addr = QString("%1:%2").arg( qaddr.toString() ).arg(port);
+    snprintf(buffer, buflen, "%s", str_addr.toStdString().c_str());
 
-    switch (Accessor->sa.sa_family)
-    {
-        case AF_INET:
-            addrbuffer = &Accessor->sa_in.sin_addr;
-            break;
-#ifdef OS_NETWORK_SUPPORTS_IPV6
-        case AF_INET6:
-            addrbuffer = &Accessor->sa_in6.sin6_addr;
-            break;
-#endif
-        default:
-            return OS_ERR_BAD_ADDRESS;
-            break;
-    }
-
-    if (inet_ntop(Accessor->sa.sa_family, addrbuffer, buffer, buflen) == NULL)
-    {
-        return OS_ERROR;
-    }
 
     return OS_SUCCESS;
 } /* end OS_SocketAddrToString_Impl */
@@ -817,3 +911,6 @@ int32 OS_SocketAddrSetPort_Impl(OS_SockAddr_t *Addr, uint16 PortNum)
 } /* end OS_SocketAddrSetPort_Impl */
 
 }
+
+// #include "inc/moc_os-impl-timebase.cpp"
+#include "inc/moc_os-impl-sockets.cpp"

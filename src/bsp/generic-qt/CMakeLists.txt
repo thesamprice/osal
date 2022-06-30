@@ -21,6 +21,7 @@ add_library(osal_generic-qt_impl OBJECT
 target_link_libraries(osal_generic-qt_impl
 	PUBLIC
     Qt5::Core
+    Qt::Network
 )
 # OSAL needs conformance to at least POSIX.1c (aka POSIX 1995) - this includes all the
 # real-time support and threading extensions.
