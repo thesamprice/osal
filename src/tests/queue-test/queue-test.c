@@ -43,6 +43,7 @@ void QueueTimeoutCheck(void);
 
 uint32    task_1_stack[TASK_1_STACK_SIZE];
 osal_id_t task_1_id;
+uint32    task_1_cont = 1;
 uint32    task_1_failures;
 uint32    task_1_timeouts;
 uint32    task_1_messages;
@@ -67,14 +68,16 @@ void task_1(void)
     size_t data_size;
     uint32 data_received = 0;
     uint32 expected      = 0;
+    uint32 loop_counter = 0;
 
     OS_printf("Starting task 1\n");
 
     OS_printf("Delay for 1 second before starting\n");
     OS_TaskDelay(1000);
-
+    timer_counter = 10;
+    OS_printf("Starting timer_counter is %d\n", timer_counter);
     /* if errors occur do not loop endlessly */
-    while (task_1_failures < 20)
+    while (task_1_failures < 20 && task_1_cont == 1)
     {
 
         status = OS_QueueGet(msgq_id, (void *)&data_received, OSAL_SIZE_C(MSGQ_SIZE), &data_size, 1000);
@@ -98,7 +101,27 @@ void task_1(void)
             OS_printf("TASK 1: Queue Get error: %d!\n", (int)status);
             OS_TaskDelay(10);
         }
+        loop_counter++;
+        OS_printf("Msg loop timer_counter is %d, loop %d timeouts %d\n", timer_counter, loop_counter,task_1_timeouts);
     }
+}
+
+
+void Task1Start(){
+    int32  status;
+
+    task_1_cont = 1;
+    status = OS_TaskCreate(&task_1_id, "Task 1", task_1, OSAL_STACKPTR_C(task_1_stack), sizeof(task_1_stack),
+                           OSAL_PRIORITY_C(TASK_1_PRIORITY), 0);
+    UtAssert_True(status == OS_SUCCESS, "Task 1 create Id=%lx Rc=%d", OS_ObjectIdToInteger(task_1_id), (int)status);
+
+}
+void Task1Stop(){
+    int status;
+    task_1_cont = 0;
+    // /* Allow task 1 to stop on its own prior to deleting */
+    status = OS_TaskDelete(task_1_id);
+    UtAssert_True(status == OS_SUCCESS, "Task 1 delete Rc=%d", (int)status);
 }
 
 void QueueTimeoutCheck(void)
@@ -108,8 +131,9 @@ void QueueTimeoutCheck(void)
 
     status = OS_TimerDelete(timer_id);
     UtAssert_True(status == OS_SUCCESS, "Timer delete Rc=%d", (int)status);
-    status = OS_TaskDelete(task_1_id);
-    UtAssert_True(status == OS_SUCCESS, "Task 1 delete Rc=%d", (int)status);
+
+    Task1Stop();
+
     status = OS_QueueDelete(msgq_id);
     UtAssert_True(status == OS_SUCCESS, "Queue 1 delete Rc=%d", (int)status);
 
@@ -119,6 +143,10 @@ void QueueTimeoutCheck(void)
     /*
      * Since nothing currently sends messages, message count should be zero,
      * and timer counter =~ 10 + ( 10 x task_1_timeouts )
+     * Task 1 timeouts is 1000 miliseconds.
+     * timer_counter counts up to 100, at intervals of 100000 micro seconds (So 100 milliseconds)
+     * 100 * 100 ~= 10 seconds.
+     * About 9 timeouts should occur.
      */
     UtAssert_True(task_1_messages == 0, "Task 1 messages = %u", (unsigned int)task_1_messages);
 
@@ -127,9 +155,12 @@ void QueueTimeoutCheck(void)
                   (unsigned int)limit);
 
     limit = ((timer_counter - 20) / 12);
+    printf("timer_counter %d timeouts %d\n",timer_counter, task_1_timeouts);
     UtAssert_True(task_1_timeouts >= limit, "Task 1 timeouts %u >= %u", (unsigned int)task_1_timeouts,
                   (unsigned int)limit);
 }
+
+
 
 void QueueTimeoutSetup(void)
 {
@@ -146,9 +177,7 @@ void QueueTimeoutSetup(void)
     /*
     ** Create the "consumer" task.
     */
-    status = OS_TaskCreate(&task_1_id, "Task 1", task_1, OSAL_STACKPTR_C(task_1_stack), sizeof(task_1_stack),
-                           OSAL_PRIORITY_C(TASK_1_PRIORITY), 0);
-    UtAssert_True(status == OS_SUCCESS, "Task 1 create Id=%lx Rc=%d", OS_ObjectIdToInteger(task_1_id), (int)status);
+   Task1Start();
 
     /*
     ** Create a timer
@@ -179,8 +208,9 @@ void QueueMessageCheck(void)
 
     status = OS_TimerDelete(timer_id);
     UtAssert_True(status == OS_SUCCESS, "Timer delete Rc=%d", (int)status);
-    status = OS_TaskDelete(task_1_id);
-    UtAssert_True(status == OS_SUCCESS, "Task 1 delete Rc=%d", (int)status);
+
+    Task1Stop();
+
     status = OS_QueueDelete(msgq_id);
     UtAssert_True(status == OS_SUCCESS, "Queue 1 delete Rc=%d", (int)status);
 
@@ -206,9 +236,7 @@ void QueueMessageSetup(void)
     /*
     ** Create the "consumer" task.
     */
-    status = OS_TaskCreate(&task_1_id, "Task 1", task_1, OSAL_STACKPTR_C(task_1_stack), sizeof(task_1_stack),
-                           OSAL_PRIORITY_C(TASK_1_PRIORITY), 0);
-    UtAssert_True(status == OS_SUCCESS, "Task 1 create Id=%lx Rc=%d", OS_ObjectIdToInteger(task_1_id), (int)status);
+    Task1Start();
 
     /*
     ** Create a timer

@@ -89,6 +89,7 @@ void OS_UsecsToTicks(uint32 usecs, int *ticks)
 }
 
 void OS_QTimeThread::run(){
+    setPriority(QThread::TimeCriticalPriority);
     OS_TimeBase_CallbackThread(*timebase_id);
 }
 
@@ -119,6 +120,8 @@ OS_QTimeBase::OS_QTimeBase()
 }
 
 void OS_QTimeBase::start(){
+
+
     timer_thread.start();
     thread.start();
 }

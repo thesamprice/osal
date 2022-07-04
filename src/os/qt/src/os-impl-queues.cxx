@@ -175,6 +175,7 @@ int32 OS_QueueDelete_Impl(const OS_object_token_t *token)
     impl = OS_OBJECT_TABLE_GET(OS_impl_queue_table, *token);
 
     while (!impl->id->isEmpty()){
+        impl->sem->tryAcquire();
         OS_imp_queue_msg * obj = impl->id->dequeue();
         OS_QueueObjDelete(obj);
     }
@@ -226,8 +227,9 @@ int32 OS_QueueGet_Impl(const OS_object_token_t *token, void *data, size_t size, 
             return_code = OS_QUEUE_EMPTY;
     }else
     {
-        if(impl->sem->tryAcquire(1,timeout) == false)
+        if(impl->sem->tryAcquire(1,timeout) == false){
             return_code = OS_QUEUE_TIMEOUT;
+        }
     }
 
     if(return_code == OS_SUCCESS){
@@ -237,11 +239,9 @@ int32 OS_QueueGet_Impl(const OS_object_token_t *token, void *data, size_t size, 
             msg->size = size; /* TODO DEBUG message here ? */
         }
         sizeCopied = msg->size;
-        memcpy(data, msg->message, *size_copied);
+        memcpy(data, msg->message,sizeCopied);
         OS_QueueObjDelete(msg);
 
-    }else{
-        return_code = OS_QUEUE_EMPTY;
     }
 
     if(size_copied != NULL){
@@ -266,6 +266,10 @@ int32 OS_QueuePut_Impl(const OS_object_token_t *token, const void *data, size_t 
     // struct timespec                  ts;
     OS_impl_queue_internal_record_t *impl;
 
+    if(size == 0){
+        return OS_QUEUE_INVALID_SIZE;
+    }
+
     impl = OS_OBJECT_TABLE_GET(OS_impl_queue_table, *token);
 
     OS_imp_queue_msg* msg = new OS_imp_queue_msg();
@@ -279,6 +283,7 @@ int32 OS_QueuePut_Impl(const OS_object_token_t *token, const void *data, size_t 
         delete msg;
         return OS_ERROR;
     }
+    memcpy(msg->message, data, size);
 
     impl->id->enqueue(msg);
     impl->sem->release(1);
