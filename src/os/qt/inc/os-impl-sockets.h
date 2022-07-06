@@ -68,7 +68,7 @@ public slots:
     bool start_listen(int port_no);
 
 protected:
-    void incomingConnection( int descriptor );
+    void incomingConnection( qintptr descriptor );
 };
 
 #endif /* OS_IMPL_SOCKETS_H */

@@ -102,7 +102,7 @@ void OS_QT_BinSemReleaseMutex(QMutex *mut)
  ----------------------------------------------------------------------------------------*/
 int32 OS_QT_BinSemAPI_Impl_Init(void)
 {
-    int idx = 0;
+
     memset(OS_impl_bin_sem_table, 0, sizeof(OS_impl_bin_sem_table));
 
     return OS_SUCCESS;
@@ -307,8 +307,7 @@ int32 OS_BinSemFlush_Impl(const OS_object_token_t *token)
 ---------------------------------------------------------------------------------------*/
 static int32 OS_GenericBinSemTake_Impl(const OS_object_token_t *token, const struct timespec *timeout)
 {
-    sig_atomic_t                      flush_count;
-    int32                             return_code;
+
     OS_impl_binsem_internal_record_t *sem;
 
     sem = OS_OBJECT_TABLE_GET(OS_impl_bin_sem_table, *token);

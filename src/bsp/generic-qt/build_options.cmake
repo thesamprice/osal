@@ -12,6 +12,7 @@ target_link_libraries(osal_bsp
 #    pthread 
   dl 
   Qt5::Core
+  Qt::Network
 )
 
 # C flags that should be used when (re-) compiling code for unit testing.

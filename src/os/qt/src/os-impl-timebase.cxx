@@ -51,7 +51,6 @@ extern "C" {
                                 INTERNAL FUNCTION PROTOTYPES
  ***************************************************************************************/
 
-static int64 OS_UsecToMili(uint32 usecs);
 
 /****************************************************************************************
                                      DEFINES
@@ -79,14 +78,6 @@ OS_QTimeBase *OS_impl_timebase_table[OS_MAX_TIMEBASES];
                                 INTERNAL FUNCTIONS
  ***************************************************************************************/
 
-
-
-void OS_UsecsToTicks(uint32 usecs, int *ticks)
-{
-    *ticks = usecs / 1000;
-    if(*ticks <= 0)
-        *ticks = 1;
-}
 
 void OS_QTimeThread::run(){
     setPriority(QThread::TimeCriticalPriority);
@@ -146,23 +137,13 @@ void OS_QTimeBase::timeout()
 }
 
 
-/*----------------------------------------------------------------
- *
- * Function: OS_UsecToTimespec
- *
- *  Purpose: Local helper routine, not part of OSAL API.
- *           Convert Microseconds to a POSIX timespec structure.
- *
- *-----------------------------------------------------------------*/
-static int64 OS_UsecToMili(uint32 usecs)
+static void OS_UsecsToTicks(uint32 usecs, int *ticks)
 {
+    *ticks = usecs / 1000;
+    if(*ticks <= 0)
+        *ticks = 1;
+}
 
-    if (usecs < 1000)
-    {
-        return 1;
-    }
-    return ((int64) usecs)/1000;
-} /* end OS_UsecToTimespec */
 
 extern "C" {
 
@@ -331,7 +312,6 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
     OS_QTimeBase *local;
     // struct itimerspec                   timeout;
     int32                               return_code;
-    int                                 status;
     OS_timebase_internal_record_t *     timebase;
     int                      start_ticks;
 

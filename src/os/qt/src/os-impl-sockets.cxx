@@ -113,7 +113,7 @@ bool QServer::start_listen(int port_no) {
     }
 }
 
-void QServer::incomingConnection(int descriptor) {
+void QServer::incomingConnection(qintptr descriptor) {
     if( !server_socket->setSocketDescriptor( descriptor ) ) {
         // QMessageBox::warning( (QWidget *)this->parent(), tr("Error!"), tr("Socket error!") );
         return;
@@ -138,7 +138,7 @@ typedef struct OS_QT_Sock_t{
 
 /* Globals */
 
-OS_QT_Sock_t OS_impl_sockets[OS_MAX_NUM_OPEN_FILES] = {0};
+OS_QT_Sock_t OS_impl_sockets[OS_MAX_NUM_OPEN_FILES] = {{0}};
 
 
 
@@ -158,27 +158,30 @@ uint16_t OS_Address_To_Port(const OS_SockAddr_t *Addr){
     const struct sockaddr *         sa;
 
     sa = (const struct sockaddr *)&Addr->AddrData;
-    struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+    struct sockaddr_in sin;
+    memcpy(&sin, sa, sizeof(sin));
+    
     uint16_t port;
-    port = htons (sin->sin_port);
+    port = htons (sin.sin_port);
     return port;
 }
 void QtAddressPort_To_OS_Address(const QHostAddress &addr, int port, OS_SockAddr_t * os_addr){
     struct sockaddr *         sa;
     sa = (struct sockaddr *)&os_addr->AddrData;
-    struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-    sin->sin_port = ntohs(port);
-    
+    struct sockaddr_in sin;
+    memcpy(&sin, sa, sizeof(sin));
+    sin.sin_port = ntohs(port);
+    memcpy( sa,&sin, sizeof(sin));
 
 
-    if(sizeof(sin->sin_addr) ==4 ){
+    if(sizeof(sin.sin_addr) ==4 ){
         int32_t ip4 = addr.toIPv4Address();
         ip4 = htonl(ip4);
-        memcpy(&sin->sin_addr,&ip4, 4 );
+        memcpy(&sin.sin_addr,&ip4, 4 );
         sa->sa_family = AF_INET;
     }else{
         Q_IPV6ADDR ip6 = addr.toIPv6Address();
-        memcpy(&sin->sin_addr,&ip6, sizeof(sin->sin_addr));
+        memcpy(&sin.sin_addr,&ip6, sizeof(sin.sin_addr));
         sa->sa_family = AF_INET6;
     }
     
@@ -205,7 +208,7 @@ int32 OS_SocketOpen_Impl(const OS_object_token_t *token)
     int                             os_domain;
     int                             os_type;
     int                             os_proto;
-    int                             os_flags;
+    // int                             os_flags;
     OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
     OS_stream_internal_record_t* stream = OS_OBJECT_TABLE_GET(OS_stream_table, *token);
 
@@ -302,7 +305,7 @@ int32 OS_SocketOpen_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_SocketBind_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Addr)
 {
-    int                             os_result;
+    // int                             os_result;
     socklen_t                       addrlen;
     const struct sockaddr *         sa;
     OS_QT_Sock_t *impl;
@@ -364,15 +367,15 @@ int32 OS_SocketBind_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Ad
 int32 OS_SocketConnect_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Addr, int32 timeout)
 {
     int32                           return_code;
-    int                             os_status;
-    int                             sockopt;
+    // int                             os_status;
+    // int                             sockopt;
     socklen_t                       slen;
-    uint32                          operation;
+    // uint32                          operation;
     const struct sockaddr *         sa;
     OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
 
-    char ip[INET_ADDRSTRLEN];
-    uint16_t port;
+    // char ip[INET_ADDRSTRLEN];
+    // uint16_t port;
 
 
     sa = (const struct sockaddr *)&Addr->AddrData;
@@ -426,7 +429,7 @@ int32 OS_SocketConnect_Impl(const OS_object_token_t *token, const OS_SockAddr_t 
 int32 OS_SocketShutdown_Impl(const OS_object_token_t *token, OS_SocketShutdownMode_t Mode)
 {
     int32                           return_code;
-    int                             how;
+    // int                             how;
     return_code = OS_SUCCESS;
     OS_QT_Sock_t *conn_impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
 
@@ -470,8 +473,8 @@ int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_
 {
     int32                           return_code;
     uint32                          operation;
-    socklen_t                       addrlen;
-    int                             os_flags;
+    // socklen_t                       addrlen;
+    // int                             os_flags;
     OS_QT_Sock_t *sock_impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *sock_token);
     OS_QT_Sock_t *conn_impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *conn_token);
 
@@ -665,7 +668,7 @@ int32 OS_SocketSendTo_Impl(const OS_object_token_t *token, const void *buffer, s
 {
     OS_QT_Sock_t *impl = OS_OBJECT_TABLE_GET(OS_impl_sockets, *token);
     int bytes_sent=0;
-    int bytes_just_sent = 0;
+    // int bytes_just_sent = 0;
     // if(impl->generic->waitForBytesWritten(-1) == false){
     //     return OS_ERROR;
     // }
@@ -797,7 +800,7 @@ int32 OS_SocketAddrInit_Impl(OS_SockAddr_t *Addr, OS_SocketDomain_t Domain)
  *-----------------------------------------------------------------*/
 int32 OS_SocketAddrToString_Impl(char *buffer, size_t buflen, const OS_SockAddr_t *Addr)
 {
-    const void *                  addrbuffer;
+    // const void *                  addrbuffer;
     const OS_SockAddr_Accessor_t *Accessor;
 
     Accessor = (const OS_SockAddr_Accessor_t *)&Addr->AddrData;

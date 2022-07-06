@@ -200,6 +200,13 @@ public:
 public slots:
     void run()
     {
+
+        /*
+        * Call application specific entry point.
+        * This should set up all user tasks and resources, then return
+        */
+        OS_Application_Startup();
+
         /*
         * OS_Application_Run() implements the background task.
         * The user application may provide this, or a default implementation
@@ -265,11 +272,6 @@ int main(int argc, char *argv[])
      */
     OS_BSP_Initialize();
 
-    /*
-     * Call application specific entry point.
-     * This should set up all user tasks and resources, then return
-     */
-    OS_Application_Startup();
 
 
     QCoreApplication a(argc, argv);
