@@ -44,6 +44,10 @@
 
 #include "osapi-printf.h"
 
+#include <pthread.h>
+/* Note that the pthread_setname_np prototype is not in the RTEMS headers */
+int pthread_setname_np(pthread_t thread, const char *name);
+
 /****************************************************************************************
                                      DEFINES
  ***************************************************************************************/
@@ -299,22 +303,17 @@ int32 OS_TaskMatch_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_TaskRegister_Impl(osal_id_t global_task_id)
 {
-    /*
-     * This is supposed to maintain the "reverse lookup" information used
-     * to map an RTEMS task ID back into an OSAL ID.
-     *
-     * Originally this used "task variables" which got deprecated.
-     * So this changed to "task notes" which are also now deprecated in 4.11.
-     *
-     * So there is now no documented per-task thread local storage facility in RTEMS
-     * with these two options gone.  RTEMS does seem to have TLS, but there is just
-     * no published (non-deprecated) API to access it.
-     *
-     * Right now this does nothing and the OS_TaskGetId() must brute-force it.
-     *
-     * An alternative for performance improvements might be to use a locally maintained
-     * hash table here.
-     */
+    uint32         task_id;
+    int32          status;
+    OS_task_prop_t task_prop;
+
+    task_id = OS_TaskGetId();
+    status = OS_TaskGetInfo(task_id, &task_prop);
+
+    if (status == OS_SUCCESS)
+    {
+       pthread_setname_np(pthread_self(), task_prop.name);
+    }
     return OS_SUCCESS;
 
 } /* end OS_TaskRegister_Impl */
