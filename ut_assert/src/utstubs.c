@@ -44,7 +44,7 @@
 #include "utstubs.h"
 #include "utbsp.h"
 
-#define UT_MAX_FUNC_STUBS     200
+#define UT_MAX_FUNC_STUBS     2000
 #define UT_APPNAME_MAX_LEN    80
 #define UT_SUBSYS_MAX_LEN     5
 #define UT_MODEFLAG_ALLOC_BUF 0x1U
