@@ -60,6 +60,7 @@ if (OSAL_CONFIG_INCLUDE_NETWORK)
     list(APPEND RTEMS_IMPL_SRCLIST
         src/os-impl-network.c
         ../portable/os-impl-bsd-sockets.c
+        ../portable/os-impl-bsd-select.c
     )
 else()
     list(APPEND RTEMS_IMPL_SRCLIST
