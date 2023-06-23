@@ -92,7 +92,7 @@ int32 OS_ShellOutputToFile_Impl(const OS_object_token_t *token, const char *Cmd)
         return Result;
     }
     
-    memset(cmdBuf, 0x0, OS_MAX_CMD_LEN);
+    memset(cmdBuf, 0x0, sizeof(cmdBuf));
 
     /* RTEMS uses joel shell scripts so include the interpreter #! line */
     snprintf(cmdBuf, OS_MAX_CMD_LEN, "%s\n%s\n", OS_SHELL_INTERPRETER_CMD, Cmd);
