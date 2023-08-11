@@ -23,6 +23,7 @@ set(RTEMS_BASE_SRCLIST
     src/os-impl-queues.c
     src/os-impl-tasks.c
     src/os-impl-timebase.c
+    src/os-impl-shell.c
 )
 
 
@@ -33,11 +34,6 @@ set(RTEMS_IMPL_SRCLIST
     ../portable/os-impl-posix-io.c
     ../portable/os-impl-posix-files.c
     ../portable/os-impl-posix-dirs.c
-)
-
-# Currently the "shell output to file" for RTEMS is not implemented
-list(APPEND RTEMS_IMPL_SRCLIST
-    ../portable/os-impl-no-shell.c
 )
 
 # If some form of module loading is configured,
