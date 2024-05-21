@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-module.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -67,7 +65,7 @@ void Test_OS_ModuleLoad(void)
      * Test Case For:
      * int32 OS_ModuleLoad ( uint32 *module_id, const char *module_name, const char *filename )
      */
-    osal_id_t objid;
+    osal_id_t objid = OS_OBJECT_ID_UNDEFINED;
 
     OSAPI_TEST_FUNCTION_RC(OS_ModuleLoad(&objid, "UT", "File", OS_MODULE_FLAG_GLOBAL_SYMBOLS), OS_SUCCESS);
     UtAssert_STUB_COUNT(OS_ModuleLoad_Impl, 1);
@@ -136,8 +134,8 @@ void Test_OS_SymbolLookup(void)
     actual = OS_SymbolLookup(&symaddr, "uttestsym0");
     UtAssert_True(actual == expected, "OS_SymbolLookup(name=%s) (%ld) == OS_SUCCESS", "uttestsym0", (long)actual);
 
-    UT_ResetState(UT_KEY(OS_GlobalSymbolLookup_Impl));
-    UT_SetDefaultReturnValue(UT_KEY(OS_GlobalSymbolLookup_Impl), OS_ERROR);
+    UT_ResetState(UT_KEY(OS_SymbolLookup_Impl));
+    UT_SetDefaultReturnValue(UT_KEY(OS_SymbolLookup_Impl), OS_ERROR);
 
     /* this lookup should always fail */
     symaddr  = 0;
@@ -204,7 +202,7 @@ void Test_OS_StaticSymbolLookup(void)
      */
     int32   expected = OS_SUCCESS;
     int32   actual   = ~OS_SUCCESS;
-    cpuaddr addr;
+    cpuaddr addr     = 0;
 
     /* nominal */
     actual = OS_SymbolLookup_Static(&addr, "UT_staticsym", NULL);
@@ -269,6 +267,8 @@ void Test_OS_ModuleGetInfo(void)
      * int32 OS_ModuleInfo ( uint32 module_id, OS_module_prop_t *module_prop )
      */
     OS_module_prop_t module_prop;
+
+    memset(&module_prop, 0, sizeof(module_prop));
 
     OS_UT_SetupBasicInfoTest(OS_OBJECT_TYPE_OS_MODULE, UT_INDEX_1, "ABC", UT_OBJID_OTHER);
     strncpy(OS_module_table[1].file_name, "DEF", sizeof(OS_module_table[1].file_name));

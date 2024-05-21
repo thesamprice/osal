@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-timebase.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -146,7 +144,7 @@ void Test_OS_TimeBaseGetIdByName(void)
      * Test Case For:
      * int32 OS_TimeBaseGetIdByName (uint32 *timer_id, const char *timebase_name)
      */
-    osal_id_t objid;
+    osal_id_t objid = OS_OBJECT_ID_UNDEFINED;
 
     UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdFindByName), 1, OS_SUCCESS);
     OSAPI_TEST_FUNCTION_RC(OS_TimeBaseGetIdByName(&objid, "UT"), OS_SUCCESS);
@@ -172,6 +170,8 @@ void Test_OS_TimeBaseGetInfo(void)
      * int32 OS_TimeBaseGetInfo (uint32 timebase_id, OS_timebase_prop_t *timebase_prop)
      */
     OS_timebase_prop_t timebase_prop;
+
+    memset(&timebase_prop, 0, sizeof(timebase_prop));
 
     OS_UT_SetupBasicInfoTest(OS_OBJECT_TYPE_OS_TIMEBASE, UT_INDEX_1, "ABC", UT_OBJID_OTHER);
 
@@ -225,6 +225,9 @@ void Test_OS_TimeBase_CallbackThread(void)
     OS_common_record_t *recptr;
     OS_object_token_t   timecb_token;
     OS_object_token_t   timecb_token2;
+
+    memset(&timecb_token, 0, sizeof(timecb_token));
+    memset(&timecb_token2, 0, sizeof(timecb_token2));
 
     recptr = &OS_global_timebase_table[2];
     memset(recptr, 0, sizeof(*recptr));
@@ -286,7 +289,7 @@ void Test_OS_Milli2Ticks(void)
      * int32 OS_Milli2Ticks(uint32 milli_seconds)
      */
     uint32 msec;
-    int    ticks;
+    int    ticks = 0;
     int    expected;
 
     msec                               = 5678;

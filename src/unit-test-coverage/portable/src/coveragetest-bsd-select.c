@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-bsd-select.c
+ * \file
  * \author   joseph.p.hickey@nasa.gov
  *
  */
@@ -119,8 +117,7 @@ void Test_OS_SelectSingle_Impl(void)
     UT_PortablePosixIOTest_Set_FD(UT_INDEX_0, OCS_FD_SETSIZE);
     UT_PortablePosixIOTest_Set_Selectable(UT_INDEX_0, true);
     OSAPI_TEST_FUNCTION_RC(OS_SelectSingle_Impl, (&token, &SelectFlags, 0), OS_ERR_OPERATION_NOT_SUPPORTED);
-
-} /* end OS_SelectSingle_Impl */
+}
 
 void Test_OS_SelectMultiple_Impl(void)
 {
@@ -188,7 +185,7 @@ void Test_OS_SelectMultiple_Impl(void)
         UT_PortablePosixIOTest_Set_FD(OSAL_INDEX_C(i), -1);
     }
     OSAPI_TEST_FUNCTION_RC(OS_SelectMultiple_Impl, (&ReadSet, &WriteSet, 0), OS_SUCCESS);
-} /* end OS_SelectMultiple_Impl */
+}
 
 /* ------------------- End of test cases --------------------------------------*/
 

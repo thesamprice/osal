@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-filesys.c
+ * \file
  * \ingroup  posix
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -45,6 +43,7 @@
 #include "os-posix.h"
 #include "os-shared-filesys.h"
 #include "os-shared-idmap.h"
+#include "os-shared-common.h"
 
 /****************************************************************************************
                                      DEFINES
@@ -69,15 +68,13 @@ const char OS_POSIX_DEVICEFILE_PREFIX[] = "/dev/";
 int32 OS_Posix_FileSysAPI_Impl_Init(void)
 {
     return OS_SUCCESS;
-} /* end OS_Posix_FileSysAPI_Impl_Init */
+}
 
 /*
  * System Level API
  */
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysStartVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -88,6 +85,8 @@ int32 OS_FileSysStartVolume_Impl(const OS_object_token_t *token)
     OS_filesys_internal_record_t *local;
     struct stat                   stat_buf;
     const char *                  tmpdir;
+    size_t                        mplen;
+    size_t                        vollen;
     uint32                        i;
     enum
     {
@@ -172,16 +171,30 @@ int32 OS_FileSysStartVolume_Impl(const OS_object_token_t *token)
             return OS_FS_ERR_DRIVE_NOT_CREATED;
         }
 
-        snprintf(local->system_mountpt, sizeof(local->system_mountpt), "%s/osal:%s", tmpdir, local->volume_name);
+        /*
+         * Note - performing the concatenation in a single snprintf() call seems
+         * to trigger a (false) pointer overlap warning, because volume_name should
+         * always be null terminated.  To get around this, calculate the
+         * string size and check that it is within the expected size, and do the
+         * append of volume_name explicitly.
+         */
+        mplen = snprintf(local->system_mountpt, sizeof(local->system_mountpt), "%s/osal:", tmpdir);
+        if (mplen < sizeof(local->system_mountpt))
+        {
+            vollen = OS_strnlen(local->volume_name, sizeof(local->volume_name));
+            if ((vollen + mplen) >= sizeof(local->system_mountpt))
+            {
+                vollen = sizeof(local->system_mountpt) - mplen - 1;
+            }
+            memcpy(&local->system_mountpt[mplen], local->volume_name, vollen);
+            local->system_mountpt[mplen + vollen] = 0;
+        }
     }
 
     return OS_SUCCESS;
-
-} /* end OS_FileSysStartVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysStopVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -199,12 +212,9 @@ int32 OS_FileSysStopVolume_Impl(const OS_object_token_t *token)
      * If the volume is started again, the directory will be re-used.
      */
     return OS_SUCCESS;
-
-} /* end OS_FileSysStopVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysFormatVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -222,12 +232,9 @@ int32 OS_FileSysFormatVolume_Impl(const OS_object_token_t *token)
      * (this is also backward compatible since POSIX mkfs was always a no-op)
      */
     return OS_SUCCESS;
-
-} /* end OS_FileSysFormatVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysMountVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -276,12 +283,9 @@ int32 OS_FileSysMountVolume_Impl(const OS_object_token_t *token)
     }
 
     return OS_SUCCESS;
-
-} /* end OS_FileSysMountVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysUnmountVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -297,12 +301,9 @@ int32 OS_FileSysUnmountVolume_Impl(const OS_object_token_t *token)
      * the mount process can stay for the next mount.
      */
     return OS_SUCCESS;
-
-} /* end OS_FileSysUnmountVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysStatVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -324,12 +325,10 @@ int32 OS_FileSysStatVolume_Impl(const OS_object_token_t *token, OS_statvfs_t *re
     result->blocks_free  = OSAL_BLOCKCOUNT_C(stat_buf.f_bfree);
     result->total_blocks = OSAL_BLOCKCOUNT_C(stat_buf.f_blocks);
 
-    return (OS_SUCCESS);
-} /* end OS_FileSysStatVolume_Impl */
+    return OS_SUCCESS;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysCheckVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -338,4 +337,4 @@ int32 OS_FileSysStatVolume_Impl(const OS_object_token_t *token, OS_statvfs_t *re
 int32 OS_FileSysCheckVolume_Impl(const OS_object_token_t *token, bool repair)
 {
     return OS_ERR_NOT_IMPLEMENTED;
-} /* end OS_FileSysCheckVolume_Impl */
+}

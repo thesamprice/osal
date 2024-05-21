@@ -6,6 +6,7 @@ set(MODULE_LIST
     binsem
     clock
     common
+    condvar
     countsem
     dir
     errors
@@ -41,6 +42,10 @@ add_library(os-shared-coverage-support STATIC
         src/os-shared-coverage-support.c
 )
 
+target_link_libraries(os-shared-coverage-support PUBLIC
+	ut_osapi_stub_headers
+)
+
 add_subdirectory(adaptors)
 
 
@@ -59,5 +64,3 @@ endforeach(MODNAME ${MODULE_LIST})
 target_compile_definitions(utobj_coverage-shared-module PRIVATE
     "OS_STATIC_SYMTABLE_SOURCE=OS_UT_STATIC_SYMBOL_TABLE"
 )
-
-

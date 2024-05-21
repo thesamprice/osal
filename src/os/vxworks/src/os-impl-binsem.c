@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-binsem.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -52,20 +50,16 @@ OS_impl_binsem_internal_record_t OS_impl_bin_sem_table[OS_MAX_BIN_SEMAPHORES];
 
 /*----------------------------------------------------------------
  *
- * Function: OS_VxWorks_BinSemAPI_Impl_Init
- *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
  *-----------------------------------------------------------------*/
 int32 OS_VxWorks_BinSemAPI_Impl_Init(void)
 {
     memset(OS_impl_bin_sem_table, 0, sizeof(OS_impl_bin_sem_table));
-    return (OS_SUCCESS);
-} /* end OS_VxWorks_BinSemAPI_Impl_Init */
+    return OS_SUCCESS;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_BinSemCreate_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -91,12 +85,9 @@ int32 OS_BinSemCreate_Impl(const OS_object_token_t *token, uint32 sem_initial_va
 
     impl->vxid = tmp_sem_id;
     return OS_SUCCESS;
-
-} /* end OS_BinSemCreate_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_BinSemDelete_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -113,12 +104,9 @@ int32 OS_BinSemDelete_Impl(const OS_object_token_t *token)
      */
     impl->vxid = 0;
     return OS_SUCCESS;
-
-} /* end OS_BinSemDelete_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_BinSemGive_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -132,11 +120,9 @@ int32 OS_BinSemGive_Impl(const OS_object_token_t *token)
 
     /* Use common routine */
     return OS_VxWorks_GenericSemGive(impl->vxid);
-} /* end OS_BinSemGive_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_BinSemFlush_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -156,11 +142,9 @@ int32 OS_BinSemFlush_Impl(const OS_object_token_t *token)
     }
 
     return OS_SUCCESS;
-} /* end OS_BinSemFlush_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_BinSemTake_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -174,12 +158,9 @@ int32 OS_BinSemTake_Impl(const OS_object_token_t *token)
 
     /* Use common routine */
     return OS_VxWorks_GenericSemTake(impl->vxid, WAIT_FOREVER);
-
-} /* end OS_BinSemTake_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_BinSemTimedWait_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -201,11 +182,9 @@ int32 OS_BinSemTimedWait_Impl(const OS_object_token_t *token, uint32 msecs)
     }
 
     return status;
-} /* end OS_BinSemTimedWait_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_BinSemGetInfo_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -215,4 +194,4 @@ int32 OS_BinSemGetInfo_Impl(const OS_object_token_t *token, OS_bin_sem_prop_t *b
 {
     /* VxWorks has no API for obtaining the current value of a semaphore */
     return OS_SUCCESS;
-} /* end OS_BinSemGetInfo_Impl */
+}

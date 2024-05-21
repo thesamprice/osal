@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-idmap.c
+ * \file
  * \ingroup  posix
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -48,6 +46,7 @@ static OS_impl_objtype_lock_t OS_timecb_table_lock;
 static OS_impl_objtype_lock_t OS_module_table_lock;
 static OS_impl_objtype_lock_t OS_filesys_table_lock;
 static OS_impl_objtype_lock_t OS_console_lock;
+static OS_impl_objtype_lock_t OS_condvar_lock;
 
 OS_impl_objtype_lock_t *const OS_impl_objtype_lock_table[OS_OBJECT_TYPE_USER] = {
     [OS_OBJECT_TYPE_UNDEFINED]   = NULL,
@@ -63,6 +62,7 @@ OS_impl_objtype_lock_t *const OS_impl_objtype_lock_table[OS_OBJECT_TYPE_USER] = 
     [OS_OBJECT_TYPE_OS_MODULE]   = &OS_module_table_lock,
     [OS_OBJECT_TYPE_OS_FILESYS]  = &OS_filesys_table_lock,
     [OS_OBJECT_TYPE_OS_CONSOLE]  = &OS_console_lock,
+    [OS_OBJECT_TYPE_OS_CONDVAR]  = &OS_condvar_lock,
 };
 
 /*---------------------------------------------------------------------------------------
@@ -76,8 +76,6 @@ void OS_Posix_ReleaseTableMutex(void *mut)
 
 /*----------------------------------------------------------------
  *
- * Function: OS_Lock_Global_Impl
- *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
@@ -89,17 +87,17 @@ void OS_Lock_Global_Impl(osal_objtype_t idtype)
 
     impl = OS_impl_objtype_lock_table[idtype];
 
-    ret = pthread_mutex_lock(&impl->mutex);
-    if (ret != 0)
+    if (impl != NULL)
     {
-        OS_DEBUG("pthread_mutex_lock(&impl->mutex): %s", strerror(ret));
+        ret = pthread_mutex_lock(&impl->mutex);
+        if (ret != 0)
+        {
+            OS_DEBUG("pthread_mutex_lock(&impl->mutex): %s", strerror(ret));
+        }
     }
-
-} /* end OS_Lock_Global_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_Unlock_Global_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -112,25 +110,25 @@ void OS_Unlock_Global_Impl(osal_objtype_t idtype)
 
     impl = OS_impl_objtype_lock_table[idtype];
 
-    /* Notify any waiting threads that the state _may_ have changed */
-    ret = pthread_cond_broadcast(&impl->cond);
-    if (ret != 0)
+    if (impl != NULL)
     {
-        OS_DEBUG("pthread_cond_broadcast(&impl->cond): %s", strerror(ret));
-        /* unexpected but keep going (not critical) */
-    }
+        /* Notify any waiting threads that the state _may_ have changed */
+        ret = pthread_cond_broadcast(&impl->cond);
+        if (ret != 0)
+        {
+            OS_DEBUG("pthread_cond_broadcast(&impl->cond): %s", strerror(ret));
+            /* unexpected but keep going (not critical) */
+        }
 
-    ret = pthread_mutex_unlock(&impl->mutex);
-    if (ret != 0)
-    {
-        OS_DEBUG("pthread_mutex_unlock(&impl->mutex): %s", strerror(ret));
+        ret = pthread_mutex_unlock(&impl->mutex);
+        if (ret != 0)
+        {
+            OS_DEBUG("pthread_mutex_unlock(&impl->mutex): %s", strerror(ret));
+        }
     }
-
-} /* end OS_Unlock_Global_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- *  Function: OS_WaitForStateChange_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -246,8 +244,7 @@ int32 OS_Posix_TableMutex_Init(osal_objtype_t idtype)
             return_code = OS_ERROR;
             break;
         }
-
     } while (0);
 
-    return (return_code);
-} /* end OS_Posix_TableMutex_Init */
+    return return_code;
+}

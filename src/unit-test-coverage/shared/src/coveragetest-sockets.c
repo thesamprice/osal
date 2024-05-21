@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-sockets.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -92,7 +90,7 @@ void Test_OS_SocketOpen(void)
      * Test Case For:
      * int32 OS_SocketOpen(uint32 *sock_id, OS_SocketDomain_t Domain, OS_SocketType_t Type)
      */
-    osal_id_t objid;
+    osal_id_t objid = OS_OBJECT_ID_UNDEFINED;
 
     OSAPI_TEST_FUNCTION_RC(OS_SocketOpen(&objid, OS_SocketDomain_INET, OS_SocketType_STREAM), OS_SUCCESS);
     OSAPI_TEST_OBJID(objid, !=, OS_OBJECT_ID_UNDEFINED);
@@ -119,29 +117,120 @@ void Test_OS_SocketBind(void)
     OS_stream_table[1].socket_domain = OS_SocketDomain_INET;
     memset(&Addr, 0, sizeof(Addr));
 
-    /* Fail implementation */
-    UT_SetDeferredRetcode(UT_KEY(OS_SocketBind_Impl), 1, OS_ERROR);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), OS_ERROR);
-
+    /* Non-stream socket (not an error) */
+    OS_stream_table[1].stream_state = 0;
+    OS_stream_table[1].socket_type  = OS_SocketType_DATAGRAM;
     OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), OS_SUCCESS);
 
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, NULL), OS_INVALID_POINTER);
+    /* Normal success */
+    OS_stream_table[1].stream_state = 0;
+    OS_stream_table[1].socket_type  = OS_SocketType_STREAM;
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), OS_SUCCESS);
 
-    /*
-     * Should fail if not a socket domain
-     */
-    OS_stream_table[1].socket_domain = OS_SocketDomain_INVALID;
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), OS_ERR_INCORRECT_OBJ_TYPE);
+    /* Failure of OS_SocketBind() - RC passed thru */
+    OS_stream_table[1].stream_state = 0;
+    UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdGetById), 1, -111);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), -111);
 
+    /* Failure of OS_SocketListen() - RC passed thru */
+    OS_stream_table[1].stream_state = 0;
+    UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdGetById), 2, -112);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), -112);
+}
+
+/*****************************************************************************
+ *
+ * Test case for OS_SocketBindAddress()
+ *
+ *****************************************************************************/
+void Test_OS_SocketBindAddress(void)
+{
     /*
-     * Should fail if already bound
+     * Test Case For:
+     * int32 OS_SocketBindAddress(uint32 sock_id, const OS_SockAddr_t *Addr)
      */
-    OS_stream_table[1].socket_domain = OS_SocketDomain_INET;
-    OS_stream_table[1].stream_state  = OS_STREAM_STATE_BOUND;
+    OS_SockAddr_t                Addr;
+    OS_stream_internal_record_t *stream;
+
+    stream = &OS_stream_table[1];
+
+    stream->socket_type   = OS_SocketType_STREAM;
+    stream->socket_domain = OS_SocketDomain_INET;
+    stream->stream_state  = 0;
+
+    memset(&Addr, 0, sizeof(Addr));
+
+    /* Bad pointer */
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress(UT_OBJID_1, NULL), OS_INVALID_POINTER);
+
+    /* Invalid object ID */
+    UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdGetById), 1, OS_ERR_INVALID_ID);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress(UT_OBJID_1, &Addr), OS_ERR_INVALID_ID);
+
+    /* Fail implementation */
+    UT_SetDeferredRetcode(UT_KEY(OS_SocketBindAddress_Impl), 1, OS_ERROR);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress(UT_OBJID_1, &Addr), OS_ERROR);
+    UtAssert_BITMASK_UNSET(stream->stream_state, OS_STREAM_STATE_BOUND);
+
+    /* Nominal success */
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress(UT_OBJID_1, &Addr), OS_SUCCESS);
+    UtAssert_BITMASK_SET(stream->stream_state, OS_STREAM_STATE_BOUND);
+
+    /* Should fail if already bound */
     OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), OS_ERR_INCORRECT_OBJ_STATE);
 
-    UT_SetDefaultReturnValue(UT_KEY(OS_ObjectIdGetById), OS_ERROR);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), OS_ERROR);
+    /* Should fail if not a socket domain */
+    stream->socket_domain = OS_SocketDomain_INVALID;
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBind(UT_OBJID_1, &Addr), OS_ERR_INCORRECT_OBJ_TYPE);
+}
+
+/*****************************************************************************
+ *
+ * Test case for OS_SocketListen()
+ *
+ *****************************************************************************/
+void Test_OS_SocketListen(void)
+{
+    /*
+     * Test Case For:
+     * int32 OS_SocketListen(uint32 sock_id)
+     */
+    OS_stream_internal_record_t *stream;
+
+    stream = &OS_stream_table[1];
+
+    stream->socket_type   = OS_SocketType_INVALID;
+    stream->socket_domain = OS_SocketDomain_INVALID;
+    stream->stream_state  = 0;
+
+    /* Invalid object ID */
+    UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdGetById), 1, OS_ERR_INVALID_ID);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen(UT_OBJID_1), OS_ERR_INVALID_ID);
+
+    /* Should fail if not a stream */
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen(UT_OBJID_1), OS_ERR_INCORRECT_OBJ_TYPE);
+
+    /* Should fail if not a socket domain */
+    stream->socket_type = OS_SocketType_STREAM;
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen(UT_OBJID_1), OS_ERR_INCORRECT_OBJ_TYPE);
+
+    /* Should fail if not bound */
+    stream->socket_domain = OS_SocketDomain_INET;
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen(UT_OBJID_1), OS_ERR_INCORRECT_OBJ_STATE);
+
+    /* Fail implementation (does not set listenting state) */
+    stream->stream_state = OS_STREAM_STATE_BOUND;
+    UT_SetDeferredRetcode(UT_KEY(OS_SocketListen_Impl), 1, OS_ERROR);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen(UT_OBJID_1), OS_ERROR);
+    UtAssert_BITMASK_SET(stream->stream_state, OS_STREAM_STATE_BOUND);
+    UtAssert_BITMASK_UNSET(stream->stream_state, OS_STREAM_STATE_LISTENING);
+
+    /* Nominal success */
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen(UT_OBJID_1), OS_SUCCESS);
+    UtAssert_BITMASK_SET(stream->stream_state, OS_STREAM_STATE_LISTENING);
+
+    /* Should fail if already listening */
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen(UT_OBJID_1), OS_ERR_INCORRECT_OBJ_STATE);
 }
 
 /*****************************************************************************
@@ -420,7 +509,7 @@ void Test_OS_SocketGetIdByName(void)
      * Test Case For:
      * int32 OS_SocketGetIdByName (uint32 *sock_id, const char *sock_name)
      */
-    osal_id_t objid;
+    osal_id_t objid = OS_OBJECT_ID_UNDEFINED;
 
     UT_SetDeferredRetcode(UT_KEY(OS_ObjectIdFindByName), 1, OS_SUCCESS);
     OSAPI_TEST_FUNCTION_RC(OS_SocketGetIdByName(&objid, "UT"), OS_SUCCESS);
@@ -444,6 +533,8 @@ void Test_OS_SocketGetInfo(void)
      * int32 OS_SocketGetInfo (uint32 sock_id, OS_socket_prop_t *sock_prop)
      */
     OS_socket_prop_t prop;
+
+    memset(&prop, 0, sizeof(prop));
 
     OS_UT_SetupBasicInfoTest(OS_OBJECT_TYPE_OS_STREAM, UT_INDEX_1, "ABC", UT_OBJID_OTHER);
 
@@ -521,6 +612,8 @@ void UtTest_Setup(void)
     ADD_TEST(OS_SocketAddr);
     ADD_TEST(OS_SocketOpen);
     ADD_TEST(OS_SocketBind);
+    ADD_TEST(OS_SocketBindAddress);
+    ADD_TEST(OS_SocketListen);
     ADD_TEST(OS_SocketAccept);
     ADD_TEST(OS_SocketConnect);
     ADD_TEST(OS_SocketRecvFrom);

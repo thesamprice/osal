@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-binsem.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -51,7 +49,7 @@ void Test_OS_BinSemCreate(void)
      * int32 OS_BinSemCreate (uint32 *sem_id, const char *sem_name,
      *          uint32 sem_initial_value, uint32 options)
      */
-    osal_id_t objid;
+    osal_id_t objid = OS_OBJECT_ID_UNDEFINED;
 
     OSAPI_TEST_FUNCTION_RC(OS_BinSemCreate(&objid, "UT", 0, 0), OS_SUCCESS);
     OSAPI_TEST_OBJID(objid, !=, OS_OBJECT_ID_UNDEFINED);
@@ -133,7 +131,7 @@ void Test_OS_BinSemGetIdByName(void)
      */
     int32     expected = OS_SUCCESS;
     int32     actual   = ~OS_SUCCESS;
-    osal_id_t objid;
+    osal_id_t objid    = OS_OBJECT_ID_UNDEFINED;
 
     UT_SetDefaultReturnValue(UT_KEY(OS_ObjectIdFindByName), OS_SUCCESS);
     actual = OS_BinSemGetIdByName(&objid, "UT");
@@ -158,6 +156,8 @@ void Test_OS_BinSemGetInfo(void)
     int32             expected = OS_SUCCESS;
     int32             actual   = ~OS_SUCCESS;
     OS_bin_sem_prop_t prop;
+
+    memset(&prop, 0, sizeof(prop));
 
     OS_UT_SetupBasicInfoTest(OS_OBJECT_TYPE_OS_BINSEM, UT_INDEX_1, "ABC", UT_OBJID_OTHER);
 

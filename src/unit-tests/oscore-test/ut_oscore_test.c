@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*================================================================================*
 ** File:  ut_oscore_test.c
@@ -247,6 +245,7 @@ void UtTest_Setup(void)
     UtTest_Add(UT_os_task_getid_by_sysdata_test, UT_os_task_getid_by_sysdata_test, NULL, "OS_TaskFindIdBySystemData");
 
     UtTest_Add(UT_os_geterrorname_test, NULL, NULL, "OS_GetErrorName");
+    UtTest_Add(UT_os_statustostring_test, NULL, NULL, "OS_StatusToString");
 
     UtTest_Add(UT_os_getlocaltime_test, NULL, NULL, "OS_GetLocalTime");
     UtTest_Add(UT_os_setlocaltime_test, NULL, NULL, "OS_SetLocalTime");

@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file   os-impl-bsd-sockets.c
+ * \file
  * \author joseph.p.hickey@nasa.gov
  *
  * Purpose: This file contains the network functionality for
@@ -135,8 +133,6 @@ void OS_SetSocketDefaultFlags_Impl(const OS_object_token_t *token)
 
 /*----------------------------------------------------------------
  *
- * Function: OS_SocketOpen_Impl
- *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
@@ -210,26 +206,22 @@ int32 OS_SocketOpen_Impl(const OS_object_token_t *token)
     OS_IMPL_SET_SOCKET_FLAGS(token);
 
     return OS_SUCCESS;
-} /* end OS_SocketOpen_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketBind_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
  *-----------------------------------------------------------------*/
-int32 OS_SocketBind_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Addr)
+int32 OS_SocketBindAddress_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Addr)
 {
     int                             os_result;
     socklen_t                       addrlen;
     const struct sockaddr *         sa;
     OS_impl_file_internal_record_t *impl;
-    OS_stream_internal_record_t *   stream;
 
-    impl   = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
-    stream = OS_OBJECT_TABLE_GET(OS_stream_table, *token);
+    impl = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
 
     sa = (const struct sockaddr *)&Addr->AddrData;
 
@@ -260,22 +252,33 @@ int32 OS_SocketBind_Impl(const OS_object_token_t *token, const OS_SockAddr_t *Ad
         return OS_ERROR;
     }
 
-    /* Start listening on the socket (implied for stream sockets) */
-    if (stream->socket_type == OS_SocketType_STREAM)
-    {
-        os_result = listen(impl->fd, 10);
-        if (os_result < 0)
-        {
-            OS_DEBUG("listen: %s\n", strerror(errno));
-            return OS_ERROR;
-        }
-    }
     return OS_SUCCESS;
-} /* end OS_SocketBind_Impl */
+}
 
 /*----------------------------------------------------------------
  *
- * Function: OS_SocketConnect_Impl
+ *  Purpose: Implemented per internal OSAL API
+ *           See prototype for argument/return detail
+ *
+ *-----------------------------------------------------------------*/
+int32 OS_SocketListen_Impl(const OS_object_token_t *token)
+{
+    int                             os_result;
+    OS_impl_file_internal_record_t *impl;
+
+    impl = OS_OBJECT_TABLE_GET(OS_impl_filehandle_table, *token);
+
+    os_result = listen(impl->fd, 10);
+    if (os_result < 0)
+    {
+        OS_DEBUG("listen: %s\n", strerror(errno));
+        return OS_ERROR;
+    }
+
+    return OS_SUCCESS;
+}
+
+/*----------------------------------------------------------------
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -369,13 +372,11 @@ int32 OS_SocketConnect_Impl(const OS_object_token_t *token, const OS_SockAddr_t 
         }
     }
     return return_code;
-} /* end OS_SocketConnect_Impl */
+}
 
 /*----------------------------------------------------------------
-   Function: OS_SocketShutdown_Impl
 
-    Purpose: Connects the socket to a remote address.
-             Socket must be of the STREAM variety.
+    Purpose: Graceful shutdown of a stream socket
 
     Returns: OS_SUCCESS on success, or relevant error code
  ------------------------------------------------------------------*/
@@ -412,11 +413,9 @@ int32 OS_SocketShutdown_Impl(const OS_object_token_t *token, OS_SocketShutdownMo
     }
 
     return return_code;
-} /* end OS_SocketShutdown_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketAccept_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -468,11 +467,9 @@ int32 OS_SocketAccept_Impl(const OS_object_token_t *sock_token, const OS_object_
     }
 
     return return_code;
-} /* end OS_SocketAccept_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketRecvFrom_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -560,11 +557,9 @@ int32 OS_SocketRecvFrom_Impl(const OS_object_token_t *token, void *buffer, size_
     }
 
     return return_code;
-} /* end OS_SocketRecvFrom_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketSendTo_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -609,11 +604,9 @@ int32 OS_SocketSendTo_Impl(const OS_object_token_t *token, const void *buffer, s
     }
 
     return os_result;
-} /* end OS_SocketSendTo_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketGetInfo_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -622,11 +615,9 @@ int32 OS_SocketSendTo_Impl(const OS_object_token_t *token, const void *buffer, s
 int32 OS_SocketGetInfo_Impl(const OS_object_token_t *token, OS_socket_prop_t *sock_prop)
 {
     return OS_SUCCESS;
-} /* end OS_SocketGetInfo_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketAddrInit_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -668,11 +659,9 @@ int32 OS_SocketAddrInit_Impl(OS_SockAddr_t *Addr, OS_SocketDomain_t Domain)
     Accessor->sa.sa_family = sa_family;
 
     return OS_SUCCESS;
-} /* end OS_SocketAddrInit_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketAddrToString_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -706,11 +695,9 @@ int32 OS_SocketAddrToString_Impl(char *buffer, size_t buflen, const OS_SockAddr_
     }
 
     return OS_SUCCESS;
-} /* end OS_SocketAddrToString_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketAddrFromString_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -745,11 +732,9 @@ int32 OS_SocketAddrFromString_Impl(OS_SockAddr_t *Addr, const char *string)
     }
 
     return OS_SUCCESS;
-} /* end OS_SocketAddrFromString_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketAddrGetPort_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -780,11 +765,9 @@ int32 OS_SocketAddrGetPort_Impl(uint16 *PortNum, const OS_SockAddr_t *Addr)
     *PortNum = ntohs(sa_port);
 
     return OS_SUCCESS;
-} /* end OS_SocketAddrGetPort_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SocketAddrSetPort_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -813,4 +796,4 @@ int32 OS_SocketAddrSetPort_Impl(OS_SockAddr_t *Addr, uint16 PortNum)
     }
 
     return OS_SUCCESS;
-} /* end OS_SocketAddrSetPort_Impl */
+}

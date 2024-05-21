@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
@@ -105,8 +103,7 @@ void UtTest_Setup(void)
     UtTest_Add(TestMutexes, NULL, NULL, "MSEM");
     UtTest_Add(TestGetInfos, NULL, NULL, "INFO");
     UtTest_Add(TestGenericQueries, NULL, NULL, "QUERIES");
-
-} /* end OS_Application Startup */
+}
 
 /* **************** A TASK THAT RUNS FOREVER **************************** */
 
@@ -116,16 +113,11 @@ void task_generic_no_exit(void)
     {
         OS_TaskDelay(100);
     }
-
-    return;
-} /* end task_0 */
+}
 
 /* **************** A TASK THAT EXITS ITSELF **************************** */
 
-void task_generic_with_exit(void)
-{
-    return;
-} /* end task_0 */
+void task_generic_with_exit(void) {}
 
 typedef struct
 {
@@ -260,8 +252,7 @@ void TestTasks(void)
     UtAssert_True(OS_TaskDelete(task_1_id) != OS_SUCCESS, "OS_TaskDelete, Task 1");
     UtAssert_True(OS_TaskDelete(task_2_id) == OS_SUCCESS, "OS_TaskDelete, Task 2");
     UtAssert_True(OS_TaskDelete(task_3_id) == OS_SUCCESS, "OS_TaskDelete, Task 3");
-
-} /* end TestTasks */
+}
 
 /* ************************************************************************************ */
 
@@ -347,8 +338,7 @@ void TestQueues(void)
 
     status = OS_QueueDelete(msgq_3);
     UtAssert_True(status == OS_SUCCESS, "OS_QueueDelete, q 3");
-
-} /* end TestQueues */
+}
 
 /* *************************************************************************** */
 void TestBinaries(void)
@@ -429,8 +419,7 @@ void TestBinaries(void)
 
     status = OS_BinSemDelete(bin_3);
     UtAssert_True(status == OS_SUCCESS, "OS_BinSemDelete, Bin 3");
-
-} /* end TestBinaries */
+}
 
 /* ************************************************************************************ */
 void TestMutexes(void)
@@ -511,8 +500,7 @@ void TestMutexes(void)
 
     status = OS_MutSemDelete(mut_3);
     UtAssert_True(status == OS_SUCCESS, "OS_MutSemDelete, Mut 3");
-
-} /* end TestMutexes */
+}
 
 /* These next several tasks simply initialize the ids to a number which
  * cannot occur in the system itself. This helps avoid confusion when a create
@@ -526,8 +514,7 @@ void InitializeTaskIds(void)
     task_1_id = OS_OBJECT_ID_UNDEFINED;
     task_2_id = OS_OBJECT_ID_UNDEFINED;
     task_3_id = OS_OBJECT_ID_UNDEFINED;
-    return;
-} /* end InitializeTaskIds */
+}
 
 /* **************************************************************************** */
 void InitializeQIds(void)
@@ -536,8 +523,7 @@ void InitializeQIds(void)
     msgq_1 = OS_OBJECT_ID_UNDEFINED;
     msgq_2 = OS_OBJECT_ID_UNDEFINED;
     msgq_3 = OS_OBJECT_ID_UNDEFINED;
-    return;
-} /* end InitializeQIds */
+}
 
 /* ***************************************************************************** */
 void InitializeBinIds(void)
@@ -546,8 +532,7 @@ void InitializeBinIds(void)
     bin_1 = OS_OBJECT_ID_UNDEFINED;
     bin_2 = OS_OBJECT_ID_UNDEFINED;
     bin_3 = OS_OBJECT_ID_UNDEFINED;
-    return;
-} /* end InitializeBinIds */
+}
 
 /* ***************************************************************************** */
 void InitializeMutIds(void)
@@ -556,8 +541,7 @@ void InitializeMutIds(void)
     mut_1 = OS_OBJECT_ID_UNDEFINED;
     mut_2 = OS_OBJECT_ID_UNDEFINED;
     mut_3 = OS_OBJECT_ID_UNDEFINED;
-    return;
-} /* end InitializeMutIds */
+}
 
 /* ***************************************************************************** */
 void TestGetInfos(void)
@@ -619,6 +603,8 @@ void TestGenericQueries(void)
     int                 status;
     TestCallbackState_t State;
     char                ResourceName[OS_MAX_API_NAME];
+
+    memset(ResourceName, 0, sizeof(ResourceName));
 
     status = OS_TaskCreate(&task_0_id, "Task 0", task_generic_no_exit, OSAL_STACKPTR_C(task_0_stack),
                            sizeof(task_0_stack), OSAL_PRIORITY_C(TASK_0_PRIORITY), 0);

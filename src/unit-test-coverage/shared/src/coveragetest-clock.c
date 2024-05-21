@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-clock.c
+ * \file
  * \ingroup  shared
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -50,9 +48,9 @@ void Test_OS_SetLocalTime(void)
      * Test Case For:
      * int32 OS_SetLocalTime(OS_time_t *time_struct)
      */
-    OS_time_t time_struct;
-    int32     expected = OS_SUCCESS;
-    int32     actual   = OS_SetLocalTime(&time_struct);
+    OS_time_t time_struct = OS_TimeAssembleFromMicroseconds(5, 12345);
+    int32     expected    = OS_SUCCESS;
+    int32     actual      = OS_SetLocalTime(&time_struct);
 
     UtAssert_True(actual == expected, "OS_SetLocalTime() (%ld) == OS_SUCCESS", (long)actual);
 
@@ -158,6 +156,19 @@ void Test_OS_TimeAccessConversions(void)
     UtAssert_UINT32_EQ(OS_TimeGetTotalMilliseconds(t3), 8666);
     t4 = OS_TimeSubtract(t3, t2);
     UtAssert_UINT32_EQ(OS_TimeGetTotalMilliseconds(t4), 3777);
+
+    /*
+     * Confirm reciprocity of the Get/From unit conversions.
+     * Note there is no (easy) way to directly compare a OS_time_t here,
+     * so this uses both conversions an just confirms the result, subject
+     * to rounding from the conversion.  In the default configuration the
+     * tick units are 100ns and so the numbers here are chosen such that
+     * the result will not lose precision, and also not overflow a uint32.
+     */
+    UtAssert_UINT32_EQ(OS_TimeGetTotalSeconds(OS_TimeFromTotalSeconds(123)), 123);
+    UtAssert_UINT32_EQ(OS_TimeGetTotalMilliseconds(OS_TimeFromTotalMilliseconds(12659687)), 12659687);
+    UtAssert_UINT32_EQ(OS_TimeGetTotalMicroseconds(OS_TimeFromTotalMicroseconds(3329165800)), 3329165800);
+    UtAssert_UINT32_EQ(OS_TimeGetTotalNanoseconds(OS_TimeFromTotalNanoseconds(347230000)), 347230000);
 }
 
 /* Osapi_Test_Setup

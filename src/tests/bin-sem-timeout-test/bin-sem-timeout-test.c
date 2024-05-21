@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /*
 ** Binary semaphore Producer/Consumer test ( test the timeout feature )
@@ -66,7 +64,10 @@ int counter = 0;
  */
 void TimerFunction(osal_id_t local_timer_id)
 {
-    int32 status;
+    int32             status;
+    OS_bin_sem_prop_t bin_sem_prop;
+
+    memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
 
     timer_counter++;
 
@@ -77,7 +78,6 @@ void TimerFunction(osal_id_t local_timer_id)
     }
 
     {
-        OS_bin_sem_prop_t bin_sem_prop;
         status = OS_BinSemGetInfo(bin_sem_id, &bin_sem_prop);
         if (status != OS_SUCCESS)
         {
@@ -98,6 +98,8 @@ void task_1(void)
 {
     uint32            status;
     OS_bin_sem_prop_t bin_sem_prop;
+
+    memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
 
     OS_printf("Starting task 1\n");
 
@@ -194,7 +196,9 @@ void BinSemTimeoutSetup(void)
 {
     uint32            status;
     OS_bin_sem_prop_t bin_sem_prop;
-    uint32            accuracy;
+    uint32            accuracy = 0;
+
+    memset(&bin_sem_prop, 0, sizeof(bin_sem_prop));
 
     task_1_timeouts         = 0;
     task_1_work             = 0;

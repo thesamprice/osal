@@ -238,6 +238,11 @@ set(OSAL_CONFIG_MAX_MUTEXES             20
     CACHE STRING "Maximum Number of Mutexes to support"
 )
 
+# The maximum number of condition variables to support
+set(OSAL_CONFIG_MAX_CONDVARS             4
+    CACHE STRING "Maximum Number of Condition Variables to support"
+)
+
 # The maximum number of loadable modules to support
 # Note that emulating module loading for statically-linked objects also
 # requires a slot in this table, as it still assigns an OSAL ID.
@@ -341,4 +346,15 @@ set(OSAL_CONFIG_MAX_CMD_LEN             1000
 # so it may be beneficial to set this limit accordingly.
 set(OSAL_CONFIG_QUEUE_MAX_DEPTH         50
     CACHE STRING "Maximum depth of message queue"
+)
+
+# Flags added to all tasks on creation
+#
+# Some OS's use floating point under the hood, this supports
+# adding the floating point flag on creation of all tasks instead of
+# just when OS_FP_ENABLED flag is passed in to OS_TaskCreate
+#
+# Set to 0 to not add any
+set(OSAL_CONFIG_ADD_TASK_FLAGS              0
+    CACHE STRING "Flags added to all tasks"
 )

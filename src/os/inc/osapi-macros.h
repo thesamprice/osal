@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -33,6 +31,15 @@
 
 #include "osconfig.h"
 #include "common_types.h"
+
+/*
+ * C++ does not support variadic macros until C++11
+ * These macros should only be used from C code, not headers
+ * or inline functions.  This ifdef prevents the C++ compiler
+ * from throwing an error about these definitions - as a result
+ * these macros are NOT available in C++ source files.
+ */
+#ifndef __cplusplus
 
 #ifdef OSAL_CONFIG_BUGCHECK_DISABLE
 
@@ -137,5 +144,16 @@
  * (i.e. non-bug) error condition with a typical error return to the caller.
  */
 #define LENGTHCHECK(str, len, errcode) ARGCHECK(memchr(str, '\0', len), errcode)
+
+/**
+ * @brief Bug-Check macro for void functions
+ *
+ * The basic BUGCHECK macro returns a value, which needs to be empty
+ * for functions that do not have a return value.  In this case the
+ * second argument (errcode) is intentionally left blank.
+ */
+#define BUGCHECK_VOID(cond) BUGCHECK(cond, )
+
+#endif /* __cplusplus */
 
 #endif /* OSAPI_MACROS_H */

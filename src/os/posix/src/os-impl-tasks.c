@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-tasks.c
+ * \file
  * \ingroup  posix
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -92,11 +90,9 @@ static int OS_PriorityRemap(osal_priority_t InputPri)
     }
 
     return OutputPri;
-} /* end OS_PriorityRemap */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_NoopSigHandler
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *           A POSIX signal handler that does nothing
@@ -118,6 +114,7 @@ static void *OS_PthreadTaskEntry(void *arg)
 {
     OS_VoidPtrValueWrapper_t local_arg;
 
+    /* cppcheck-suppress unreadVariable // intentional use of other union member */
     local_arg.opaque_arg = arg;
     OS_TaskEntryPoint(local_arg.id); /* Never returns */
 
@@ -189,7 +186,7 @@ static bool OS_Posix_GetSchedulerParams(int sched_policy, POSIX_PriorityLimits_t
     OS_DEBUG("Policy %d: available, min-max: %d-%d\n", sched_policy, (int)PriLim->PriorityMin,
              (int)PriLim->PriorityMax);
     return true;
-} /* end OS_Posix_GetSchedulerParams */
+}
 
 /*
  *********************************************************************************
@@ -427,11 +424,9 @@ int32 OS_Posix_TaskAPI_Impl_Init(void)
     POSIX_GlobalVars.PageSize = ret_long;
 
     return OS_SUCCESS;
-} /* end OS_Posix_TaskAPI_Impl_Init */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_Posix_InternalTaskCreate_Impl
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
@@ -452,7 +447,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
     if (return_code != 0)
     {
         OS_DEBUG("pthread_attr_init error in OS_TaskCreate: %s\n", strerror(return_code));
-        return (OS_ERROR);
+        return OS_ERROR;
     }
 
     /*
@@ -481,7 +476,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
     if (return_code != 0)
     {
         OS_DEBUG("pthread_attr_setstacksize error in OS_TaskCreate: %s\n", strerror(return_code));
-        return (OS_ERROR);
+        return OS_ERROR;
     }
 
     /*
@@ -491,7 +486,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
     if (return_code != 0)
     {
         OS_DEBUG("pthread_attr_setdetachstate error in OS_TaskCreate: %s\n", strerror(return_code));
-        return (OS_ERROR);
+        return OS_ERROR;
     }
 
     /*
@@ -508,7 +503,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
         if (return_code != 0)
         {
             OS_DEBUG("pthread_attr_setinheritsched error in OS_TaskCreate, errno = %s\n", strerror(return_code));
-            return (OS_ERROR);
+            return OS_ERROR;
         }
 
         /*
@@ -519,7 +514,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
         if (return_code != 0)
         {
             OS_DEBUG("pthread_attr_setschedpolity error in OS_TaskCreate: %s\n", strerror(return_code));
-            return (OS_ERROR);
+            return OS_ERROR;
         }
 
         /*
@@ -529,7 +524,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
         if (return_code != 0)
         {
             OS_DEBUG("pthread_attr_getschedparam error in OS_TaskCreate: %s\n", strerror(return_code));
-            return (OS_ERROR);
+            return OS_ERROR;
         }
 
         priority_holder.sched_priority = OS_PriorityRemap(priority);
@@ -537,7 +532,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
         if (return_code != 0)
         {
             OS_DEBUG("pthread_attr_setschedparam error in OS_TaskCreate: %s\n", strerror(return_code));
-            return (OS_ERROR);
+            return OS_ERROR;
         }
 
     } /* End if user is root */
@@ -549,7 +544,7 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
     if (return_code != 0)
     {
         OS_DEBUG("pthread_create error in OS_TaskCreate: %s\n", strerror(return_code));
-        return (OS_ERROR);
+        return OS_ERROR;
     }
 
     /*
@@ -565,11 +560,9 @@ int32 OS_Posix_InternalTaskCreate_Impl(pthread_t *pthr, osal_priority_t priority
     }
 
     return OS_SUCCESS;
-} /* end OS_Posix_InternalTaskCreate_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskCreate_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -582,8 +575,10 @@ int32 OS_TaskCreate_Impl(const OS_object_token_t *token, uint32 flags)
     OS_impl_task_internal_record_t *impl;
     OS_task_internal_record_t *     task;
 
-    arg.opaque_arg = NULL;
-    arg.id         = OS_ObjectIdFromToken(token);
+    memset(&arg, 0, sizeof(arg));
+
+    /* cppcheck-suppress unreadVariable // intentional use of other union member */
+    arg.id = OS_ObjectIdFromToken(token);
 
     task = OS_OBJECT_TABLE_GET(OS_task_table, *token);
     impl = OS_OBJECT_TABLE_GET(OS_impl_task_table, *token);
@@ -592,11 +587,9 @@ int32 OS_TaskCreate_Impl(const OS_object_token_t *token, uint32 flags)
                                                    arg.opaque_arg);
 
     return return_code;
-} /* end OS_TaskCreate_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskDetach_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -623,8 +616,6 @@ int32 OS_TaskDetach_Impl(const OS_object_token_t *token)
 
 /*----------------------------------------------------------------
  *
- * Function: OS_TaskMatch_Impl
- *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
@@ -641,11 +632,9 @@ int32 OS_TaskMatch_Impl(const OS_object_token_t *token)
     }
 
     return OS_SUCCESS;
-} /* end OS_TaskMatch_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskDelete_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -695,12 +684,9 @@ int32 OS_TaskDelete_Impl(const OS_object_token_t *token)
         }
     }
     return OS_SUCCESS;
-
-} /* end OS_TaskDelete_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskExit_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -709,12 +695,9 @@ int32 OS_TaskDelete_Impl(const OS_object_token_t *token)
 void OS_TaskExit_Impl()
 {
     pthread_exit(NULL);
-
-} /* end OS_TaskExit_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskDelay_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -748,11 +731,9 @@ int32 OS_TaskDelay_Impl(uint32 millisecond)
     {
         return OS_SUCCESS;
     }
-} /* end OS_TaskDelay_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskSetPriority_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -780,16 +761,14 @@ int32 OS_TaskSetPriority_Impl(const OS_object_token_t *token, osal_priority_t ne
         {
             OS_DEBUG("pthread_setschedprio: Task ID = %lu, prio = %d, err = %s\n",
                      OS_ObjectIdToInteger(OS_ObjectIdFromToken(token)), os_priority, strerror(ret));
-            return (OS_ERROR);
+            return OS_ERROR;
         }
     }
 
     return OS_SUCCESS;
-} /* end OS_TaskSetPriority_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskRegister_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -811,8 +790,10 @@ int32 OS_TaskRegister_Impl(osal_id_t global_task_id)
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old_type);
 
-    arg.opaque_arg = 0;
-    arg.id         = global_task_id;
+    memset(&arg, 0, sizeof(arg));
+
+    /* cppcheck-suppress unreadVariable // intentional use of other union member */
+    arg.id = global_task_id;
 
     return_code = pthread_setspecific(POSIX_GlobalVars.ThreadKey, arg.opaque_arg);
     if (return_code == 0)
@@ -826,11 +807,9 @@ int32 OS_TaskRegister_Impl(osal_id_t global_task_id)
     }
 
     return return_code;
-} /* end OS_TaskRegister_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskGetId_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -840,14 +819,13 @@ osal_id_t OS_TaskGetId_Impl(void)
 {
     OS_VoidPtrValueWrapper_t self_record;
 
+    /* cppcheck-suppress unreadVariable // intentional use of other union member */
     self_record.opaque_arg = pthread_getspecific(POSIX_GlobalVars.ThreadKey);
 
-    return (self_record.id);
-} /* end OS_TaskGetId_Impl */
+    return self_record.id;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskGetInfo_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -856,11 +834,9 @@ osal_id_t OS_TaskGetId_Impl(void)
 int32 OS_TaskGetInfo_Impl(const OS_object_token_t *token, OS_task_prop_t *task_prop)
 {
     return OS_SUCCESS;
-} /* end OS_TaskGetInfo_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskIdMatchSystemData_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -877,8 +853,6 @@ bool OS_TaskIdMatchSystemData_Impl(void *ref, const OS_object_token_t *token, co
 }
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TaskValidateSystemData_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail

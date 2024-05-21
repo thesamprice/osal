@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-timebase.c
+ * \file
  * \ingroup  rtems
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -28,8 +26,6 @@
 /****************************************************************************************
                                     INCLUDE FILES
  ***************************************************************************************/
-#define _USING_RTEMS_INCLUDES_
-
 #include "os-rtems.h"
 
 #include "os-shared-common.h"
@@ -85,8 +81,6 @@ OS_impl_timebase_internal_record_t OS_impl_timebase_table[OS_MAX_TIMEBASES];
 
 /*----------------------------------------------------------------
  *
- * Function: OS_TimeBaseLock_Impl
- *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
@@ -98,11 +92,9 @@ void OS_TimeBaseLock_Impl(const OS_object_token_t *token)
     impl = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
 
     rtems_semaphore_obtain(impl->handler_mutex, RTEMS_WAIT, RTEMS_NO_TIMEOUT);
-} /* end OS_TimeBaseLock_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TimeBaseUnlock_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -115,11 +107,9 @@ void OS_TimeBaseUnlock_Impl(const OS_object_token_t *token)
     impl = OS_OBJECT_TABLE_GET(OS_impl_timebase_table, *token);
 
     rtems_semaphore_release(impl->handler_mutex);
-} /* end OS_TimeBaseUnlock_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TimeBase_ISR
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *           An ISR to service a timer tick interrupt, which in turn
@@ -153,12 +143,9 @@ static rtems_timer_service_routine OS_TimeBase_ISR(rtems_id rtems_timer_id, void
          */
         rtems_semaphore_release(local->tick_sem);
     }
-
-} /* end OS_TimeBase_ISR */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TimeBase_WaitImpl
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *           Pends on the semaphore for the next timer tick
@@ -200,15 +187,13 @@ static uint32 OS_TimeBase_WaitImpl(osal_id_t timebase_id)
     }
 
     return tick_time;
-} /* end OS_TimeBase_WaitImpl */
+}
 
 /****************************************************************************************
                                 INITIALIZATION FUNCTION
  ***************************************************************************************/
 
 /*----------------------------------------------------------------
- *
- * Function: OS_Rtems_TimeBaseAPI_Impl_Init
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
@@ -245,16 +230,14 @@ int32 OS_Rtems_TimeBaseAPI_Impl_Init(void)
      */
     OS_SharedGlobalVars.MicroSecPerTick = (RTEMS_GlobalVars.ClockAccuracyNsec + 500) / 1000;
 
-    return (OS_SUCCESS);
-} /* end OS_Rtems_TimeBaseAPI_Impl_Init */
+    return OS_SUCCESS;
+}
 
 /****************************************************************************************
                                 INTERNAL FUNCTIONS
  ***************************************************************************************/
 
 /*----------------------------------------------------------------
- *
- * Function: OS_UsecsToTicks
  *
  *  Purpose:  Convert Microseconds to a number of ticks.
  *
@@ -279,7 +262,7 @@ void OS_UsecsToTicks(uint32 usecs, rtems_interval *ticks)
     }
 
     *ticks = (rtems_interval)result;
-} /* end OS_UsecsToTicks */
+}
 
 /****************************************************************************************
                                    Time Base API
@@ -290,7 +273,21 @@ void OS_UsecsToTicks(uint32 usecs, rtems_interval *ticks)
 
 /*----------------------------------------------------------------
  *
- * Function: OS_TimeBaseCreate_Impl
+ *  Purpose: Local helper routine, not part of OSAL API.
+ *           Wrapper function used by OS_TimeBaseCreate_Impl to
+ *           convert the rtems_task_argument on newly created
+ *           timebase task into an osal_id_t used by the
+ *           OS_TimeBase_CallbackThread.
+ *
+ *-----------------------------------------------------------------*/
+static void OS_TimeBase_CallbackThreadEntry(rtems_task_argument arg)
+{
+    osal_id_t id;
+    id = OS_ObjectIdFromInteger(arg);
+    OS_TimeBase_CallbackThread(id);
+}
+
+/*----------------------------------------------------------------
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -392,9 +389,9 @@ int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
         else
         {
             /* will place the task in 'ready for scheduling' state */
-            rtems_sc = rtems_task_start(local->handler_task,                          /*rtems task id*/
-                                        (rtems_task_entry)OS_TimeBase_CallbackThread, /* task entry point */
-                                        (rtems_task_argument)r_name);                 /* passed argument  */
+            rtems_sc = rtems_task_start(local->handler_task,             /* rtems task id */
+                                        OS_TimeBase_CallbackThreadEntry, /* task entry point */
+                                        (rtems_task_argument)r_name);    /* passed argument  */
 
             if (rtems_sc != RTEMS_SUCCESSFUL)
             {
@@ -415,11 +412,9 @@ int32 OS_TimeBaseCreate_Impl(const OS_object_token_t *token)
     }
 
     return return_code;
-} /* end OS_TimeBaseCreate_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TimeBaseSet_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -474,8 +469,10 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
             */
             OS_UsecsToTicks(start_time, &start_ticks);
 
-            user_data.opaque_arg = NULL;
-            user_data.id         = OS_ObjectIdFromToken(token);
+            memset(&user_data, 0, sizeof(user_data));
+
+            /* cppcheck-suppress unreadVariable // intentional use of other union member */
+            user_data.id = OS_ObjectIdFromToken(token);
 
             status = rtems_timer_fire_after(local->rtems_timer_id, start_ticks, OS_TimeBase_ISR, user_data.opaque_arg);
             if (status != RTEMS_SUCCESSFUL)
@@ -519,11 +516,9 @@ int32 OS_TimeBaseSet_Impl(const OS_object_token_t *token, uint32 start_time, uin
         local->reset_flag = 1;
     }
     return return_code;
-} /* end OS_TimeBaseSet_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TimeBaseDelete_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -583,11 +578,9 @@ int32 OS_TimeBaseDelete_Impl(const OS_object_token_t *token)
     }
 
     return return_code;
-} /* end OS_TimeBaseDelete_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_TimeBaseGetInfo_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -596,5 +589,4 @@ int32 OS_TimeBaseDelete_Impl(const OS_object_token_t *token)
 int32 OS_TimeBaseGetInfo_Impl(const OS_object_token_t *token, OS_timebase_prop_t *timer_prop)
 {
     return OS_SUCCESS;
-
-} /* end OS_TimeBaseGetInfo_Impl */
+}

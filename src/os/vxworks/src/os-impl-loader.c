@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-loader.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -49,24 +47,20 @@ OS_impl_module_internal_record_t OS_impl_module_table[OS_MAX_MODULES];
 
 /*----------------------------------------------------------------
  *
- * Function: OS_VxWorks_ModuleAPI_Impl_Init
- *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
  *-----------------------------------------------------------------*/
 int32 OS_VxWorks_ModuleAPI_Impl_Init(void)
 {
     memset(&OS_impl_module_table, 0, sizeof(OS_impl_module_table));
-    return (OS_SUCCESS);
-} /* end OS_VxWorks_ModuleAPI_Impl_Init */
+    return OS_SUCCESS;
+}
 
 /****************************************************************************************
                                     Module Loader API
 ****************************************************************************************/
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ModuleLoad_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -118,13 +112,10 @@ int32 OS_ModuleLoad_Impl(const OS_object_token_t *token, const char *translated_
         close(fd);
     }
 
-    return (return_code);
-
-} /* end OS_ModuleLoad_Impl */
+    return return_code;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ModuleUnload_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -144,16 +135,13 @@ int32 OS_ModuleUnload_Impl(const OS_object_token_t *token)
     if (vxStatus == ERROR)
     {
         OS_DEBUG("OSAL: Error, Cannot Close/Unload application file: %d\n", vxStatus);
-        return (OS_ERROR);
+        return OS_ERROR;
     }
 
-    return (OS_SUCCESS);
-
-} /* end OS_ModuleUnload_Impl */
+    return OS_SUCCESS;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ModuleGetInfo_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -192,6 +180,5 @@ int32 OS_ModuleGetInfo_Impl(const OS_object_token_t *token, OS_module_prop_t *mo
         return_code = OS_SUCCESS;
     }
 
-    return (return_code);
-
-} /* end OS_ModuleGetInfo_Impl */
+    return return_code;
+}

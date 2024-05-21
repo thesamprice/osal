@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /* OSAL coverage stub replacement for functions in sys/stat.h */
 #include <string.h>
@@ -58,7 +56,7 @@ int OCS_stat(const char *file, struct OCS_stat *buf)
 
     Status = UT_DEFAULT_IMPL(OCS_stat);
 
-    if (Status == 0 && UT_Stub_CopyToLocal(UT_KEY(OCS_stat), buf, sizeof(*buf)) < sizeof(*buf))
+    if (UT_Stub_CopyToLocal(UT_KEY(OCS_stat), buf, sizeof(*buf)) < sizeof(*buf))
     {
         memset(buf, 0, sizeof(*buf));
     }
@@ -72,7 +70,7 @@ int OCS_fstat(int fd, struct OCS_stat *buf)
 
     Status = UT_DEFAULT_IMPL(OCS_fstat);
 
-    if (Status == 0 && UT_Stub_CopyToLocal(UT_KEY(OCS_fstat), buf, sizeof(*buf)) < sizeof(*buf))
+    if (UT_Stub_CopyToLocal(UT_KEY(OCS_fstat), buf, sizeof(*buf)) < sizeof(*buf))
     {
         memset(buf, 0, sizeof(*buf));
     }
@@ -86,7 +84,7 @@ int OCS_statvfs(const char *file, struct OCS_statvfs *buf)
 
     Status = UT_DEFAULT_IMPL(OCS_statvfs);
 
-    if (Status == 0 && UT_Stub_CopyToLocal(UT_KEY(OCS_statvfs), buf, sizeof(*buf)) < sizeof(*buf))
+    if (UT_Stub_CopyToLocal(UT_KEY(OCS_statvfs), buf, sizeof(*buf)) < sizeof(*buf))
     {
         memset(buf, 0, sizeof(*buf));
     }
