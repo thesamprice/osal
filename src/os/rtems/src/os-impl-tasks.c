@@ -279,7 +279,7 @@ int32 OS_TaskMatch_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_TaskRegister_Impl(osal_id_t global_task_id)
 {
-    uint32         task_id;
+    osal_id_t      task_id;
     int32          status;
     OS_task_prop_t task_prop;
 

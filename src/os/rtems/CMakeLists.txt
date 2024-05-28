@@ -62,11 +62,11 @@ if (OSAL_CONFIG_INCLUDE_NETWORK)
     # In RTEMS 6+ the networking subsystem is not included with the defualt libs,
     # it needs to be explicitly added to the final link.  Note the "VERSION_GREATER_EQUAL"
     # operation was not added until CMake 3.7, so this uses not "VERSION_LESS" instead.
-    if(NOT CMAKE_SYSTEM_VERSION VERSION_LESS 6.0)
-        target_link_libraries(osal_public_api INTERFACE
-            networking
-        )
-    endif()
+    #if(NOT CMAKE_SYSTEM_VERSION VERSION_LESS 6.0)
+    #    target_link_libraries(osal_public_api INTERFACE
+    #        networking
+    #    )
+    #endif()
 else()
     list(APPEND RTEMS_IMPL_SRCLIST
         ../portable/os-impl-no-network.c
