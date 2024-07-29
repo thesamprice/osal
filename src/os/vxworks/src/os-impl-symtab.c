@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-symtab.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -64,8 +62,6 @@ extern SYMTAB_ID sysSymTbl;
 
 /*----------------------------------------------------------------
  *
- * Function: OS_GenericSymbolLookup_Impl
- *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
@@ -80,7 +76,7 @@ int32 OS_GenericSymbolLookup_Impl(SYMTAB_ID SymTab, cpuaddr *SymbolAddress, cons
     */
     if ((SymbolAddress == NULL) || (SymbolName == NULL))
     {
-        return (OS_INVALID_POINTER);
+        return OS_INVALID_POINTER;
     }
 
     /*
@@ -99,29 +95,24 @@ int32 OS_GenericSymbolLookup_Impl(SYMTAB_ID SymTab, cpuaddr *SymbolAddress, cons
 
     if (vxStatus == ERROR)
     {
-        return (OS_ERROR);
+        return OS_ERROR;
     }
 
-    return (OS_SUCCESS);
-
-} /* end OS_GenericSymbolLookup_Impl */
+    return OS_SUCCESS;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_GlobalSymbolLookup_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
  *-----------------------------------------------------------------*/
-int32 OS_GlobalSymbolLookup_Impl(cpuaddr *SymbolAddress, const char *SymbolName)
+int32 OS_SymbolLookup_Impl(cpuaddr *SymbolAddress, const char *SymbolName)
 {
     return OS_GenericSymbolLookup_Impl(sysSymTbl, SymbolAddress, SymbolName);
-} /* end OS_GlobalSymbolLookup_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ModuleSymbolLookup_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -130,18 +121,16 @@ int32 OS_GlobalSymbolLookup_Impl(cpuaddr *SymbolAddress, const char *SymbolName)
 int32 OS_ModuleSymbolLookup_Impl(const OS_object_token_t *token, cpuaddr *SymbolAddress, const char *SymbolName)
 {
     /*
-     * NOTE: this is currently exactly the same as OS_GlobalSymbolLookup_Impl().
+     * NOTE: this is currently exactly the same as OS_SymbolLookup_Impl().
      *
      * Ideally this should get a SYMTAB_ID from the MODULE_ID and search only
      * for the symbols provided by that module - but it is not clear if vxWorks
      * offers this capability.
      */
     return OS_GenericSymbolLookup_Impl(sysSymTbl, SymbolAddress, SymbolName);
-} /* end OS_ModuleSymbolLookup_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SymTableIterator_Impl
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *           Function called by vxWorks to iterate the vxworks symbol table
@@ -172,11 +161,20 @@ BOOL OS_SymTableIterator_Impl(char *name, SYM_VALUE val, SYM_TYPE type, _Vx_usr_
      */
     state = &OS_VxWorks_SymbolDumpState;
 
+    /*
+    ** Copy symbol name
+    */
+    strncpy(symRecord.SymbolName, name, sizeof(symRecord.SymbolName) - 1);
+    symRecord.SymbolName[sizeof(symRecord.SymbolName) - 1] = '\0';
+
+    /*
+    ** Check to see if the max length of each symbol name has been reached
+    */
     if (memchr(name, 0, OS_MAX_SYM_LEN) == NULL)
     {
+        symRecord.SymbolName[sizeof(symRecord.SymbolName) - 2] = '*';
         OS_DEBUG("%s(): symbol name too long\n", __func__);
         state->StatusCode = OS_ERR_NAME_TOO_LONG;
-        return (false);
     }
 
     /*
@@ -191,14 +189,8 @@ BOOL OS_SymTableIterator_Impl(char *name, SYM_VALUE val, SYM_TYPE type, _Vx_usr_
         */
         OS_DEBUG("%s(): symbol table size exceeded\n", __func__);
         state->StatusCode = OS_ERR_OUTPUT_TOO_LARGE;
-        return (false);
+        return false;
     }
-
-    /*
-    ** Copy symbol name
-    */
-    strncpy(symRecord.SymbolName, name, sizeof(symRecord.SymbolName) - 1);
-    symRecord.SymbolName[sizeof(symRecord.SymbolName) - 1] = 0;
 
     /*
     ** Save symbol address
@@ -214,7 +206,7 @@ BOOL OS_SymTableIterator_Impl(char *name, SYM_VALUE val, SYM_TYPE type, _Vx_usr_
     if (status < (int)sizeof(symRecord))
     {
         state->StatusCode = OS_ERROR;
-        return (false);
+        return false;
     }
 
     state->CurrSize = NextSize;
@@ -222,12 +214,10 @@ BOOL OS_SymTableIterator_Impl(char *name, SYM_VALUE val, SYM_TYPE type, _Vx_usr_
     /*
     ** It's OK to continue
     */
-    return (true);
-} /* end OS_SymTableIterator_Impl */
+    return true;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_SymbolTableDump_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -275,6 +265,5 @@ int32 OS_SymbolTableDump_Impl(const char *filename, size_t size_limit)
         state->StatusCode = OS_ERROR;
     }
 
-    return (state->StatusCode);
-
-} /* end OS_SymbolTableDump_Impl */
+    return state->StatusCode;
+}

@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-common.c
+ * \file
  * \ingroup  posix
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -93,16 +91,17 @@ int32 OS_API_Impl_Init(osal_objtype_t idtype)
         case OS_OBJECT_TYPE_OS_FILESYS:
             return_code = OS_Posix_FileSysAPI_Impl_Init();
             break;
+        case OS_OBJECT_TYPE_OS_CONDVAR:
+            return_code = OS_Posix_CondVarAPI_Impl_Init();
+            break;
         default:
             break;
     }
 
-    return (return_code);
-} /* end OS_API_Impl_Init */
+    return return_code;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_IdleLoop_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -119,11 +118,9 @@ void OS_IdleLoop_Impl(void)
      * timebase objects have a dedicated thread that will be doing "sigwait" on those.
      */
     sigsuspend(&POSIX_GlobalVars.NormalSigMask);
-} /* end OS_IdleLoop_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ApplicationShutdown_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -136,11 +133,9 @@ void OS_ApplicationShutdown_Impl(void)
      * which should break it out of the sigsuspend() call.
      */
     kill(getpid(), SIGHUP);
-} /* end OS_ApplicationShutdown_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_CompAbsDelayTime
  *
  * Purpose:  Local helper function
  *
@@ -163,4 +158,4 @@ void OS_Posix_CompAbsDelayTime(uint32 msecs, struct timespec *tm)
         tm->tv_nsec -= 1000000000L;
         tm->tv_sec++;
     }
-} /* end OS_CompAbsDelayTime */
+}

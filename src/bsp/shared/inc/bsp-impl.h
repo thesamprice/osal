@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -105,7 +103,6 @@ typedef struct
      * feature.
      */
     uint32 ResoureConfig[OS_OBJECT_TYPE_USER];
-
 } OS_BSP_GlobalData_t;
 
 /*
@@ -118,7 +115,6 @@ extern OS_BSP_GlobalData_t OS_BSP_Global;
 /********************************************************************/
 
 /*----------------------------------------------------------------
-   Function: OS_BSP_Lock_Impl
 
     Purpose: Get exclusive access to a BSP-provided service or object
 
@@ -129,7 +125,6 @@ extern OS_BSP_GlobalData_t OS_BSP_Global;
 void OS_BSP_Lock_Impl(void);
 
 /*----------------------------------------------------------------
-   Function: OS_BSP_Unlock_Impl
 
     Purpose: Release exclusive access to a BSP-provided service or object
 
@@ -140,7 +135,6 @@ void OS_BSP_Lock_Impl(void);
 void OS_BSP_Unlock_Impl(void);
 
 /*----------------------------------------------------------------
-   Function: OS_BSP_ConsoleOutput_Impl
 
     Purpose: Low level raw console data output.  Writes a sequence of
              characters directly to the BSP debug terminal or console device.
@@ -155,7 +149,6 @@ void OS_BSP_Unlock_Impl(void);
 void OS_BSP_ConsoleOutput_Impl(const char *Str, size_t DataLen);
 
 /*----------------------------------------------------------------
-   Function: OS_BSP_ConsoleSetMode_Impl
 
     Purpose: Set the console output mode, if supported by the BSP.
 
@@ -173,7 +166,6 @@ void OS_BSP_ConsoleOutput_Impl(const char *Str, size_t DataLen);
 void OS_BSP_ConsoleSetMode_Impl(uint32 ModeBits);
 
 /*----------------------------------------------------------------
-   Function: OS_BSP_Shutdown_Impl
 
     Purpose: Causes the calling task to abort in a BSP-safe way.
              This may map to the abort() system call, but on some systems

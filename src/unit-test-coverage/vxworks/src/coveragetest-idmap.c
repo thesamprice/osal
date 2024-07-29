@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     coveragetest-idmap.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -44,7 +42,11 @@ void Test_OS_Lock_Global_Impl(void)
 
     UT_IdMapTest_SetImplTableMutex(OS_OBJECT_TYPE_OS_TASK, &TestGlobalSem);
     OS_Lock_Global_Impl(OS_OBJECT_TYPE_OS_TASK);
-    UtAssert_True(UT_GetStubCount(UT_KEY(OCS_semTake)) == 1, "semTake() called");
+    UtAssert_STUB_COUNT(OCS_semTake, 1);
+
+    /* The "undefined" type should not have a lock instantiated */
+    OS_Lock_Global_Impl(OS_OBJECT_TYPE_UNDEFINED);
+    UtAssert_STUB_COUNT(OCS_semTake, 1);
 
     UT_SetDefaultReturnValue(UT_KEY(OCS_semTake), -1);
     OS_Lock_Global_Impl(OS_OBJECT_TYPE_OS_TASK); /* for coverage of error path */
@@ -59,7 +61,11 @@ void Test_OS_Unlock_Global_Impl(void)
 
     UT_IdMapTest_SetImplTableMutex(OS_OBJECT_TYPE_OS_TASK, &TestGlobalSem);
     OS_Unlock_Global_Impl(OS_OBJECT_TYPE_OS_TASK);
-    UtAssert_True(UT_GetStubCount(UT_KEY(OCS_semGive)) == 1, "semTake() called");
+    UtAssert_STUB_COUNT(OCS_semGive, 1);
+
+    /* The "undefined" type should not have a lock instantiated */
+    OS_Unlock_Global_Impl(OS_OBJECT_TYPE_UNDEFINED);
+    UtAssert_STUB_COUNT(OCS_semGive, 1);
 
     UT_SetDefaultReturnValue(UT_KEY(OCS_semGive), -1);
     OS_Unlock_Global_Impl(OS_OBJECT_TYPE_OS_TASK); /* for coverage of error path */

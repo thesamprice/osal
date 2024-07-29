@@ -4,10 +4,16 @@
 #
 ######################################################################
 #
-# This defines the following static library target(s):
+# This defines the following target(s):
 #
-#         osal   : The main library containing the OSAL binary code
-#                  This is based off the OSAL_SYSTEM_OSTYPE selection
+# osal_public_api : Interface library that refers to the OSAL public API only.
+#                   This may be used for applications that need to use the
+#                   OSAL-provided types (such as common-types.h) but do not
+#                   make any OSAL API calls.
+#
+#         osal   : The main library containing the OSAL binary code.  This is
+#                  the normal library that applications should link to.
+#                  This is built based off the OSAL_SYSTEM_OSTYPE selection
 #
 #     osal_bsp   : The board support library containing the system-
 #                  specific entry point function (e.g. main) and the
@@ -21,6 +27,46 @@
 #                  Linking with this library also links with osal_bsp,
 #                  but not necessarily the osal library itself.
 #
+# ut_coverage_compile : an interface target that contains the
+#                       compiler options/definitions to enable coverage
+#                       instrumentation in the generated objects.  It should
+#                       be specified on files compiled for coverage analysis.
+#
+# ut_coverage_link    : an interface target that contains options/definitions
+#                       and any link libraries to enable coverage instrumentation in
+#                       the final executable.   It should be specified on coverage
+#                       test executable targets.
+#
+#
+# The following options and variables will customize the build:
+#
+# OSAL_SYSTEM_BSPTYPE: Should be set by the caller to indicate the type of
+#                  BSP to build.  This is a minimal platform-specific shim
+#                  layer to aid with startup and shutdown.  This implies a
+#                  value for OSTYPE (see below).
+#
+# OSAL_SYSTEM_OSTYPE: The selected OS abstraction type (posix, vxworks, rtems).
+#                  Normally this setting is not needed to be configured as it is
+#                  inferred from the BSP type.
+#
+# OSAL_INSTALL_LIBRARIES : Boolean, enables "install" of targets listed above such
+#                  that libraries and public API header files are copied into the system
+#                  location specified by CMAKE_INSTALL_PREFIX.  This set of headers
+#                  and link libraries can then be used to compile other applications
+#                  separately from OSAL.  Default is "ON" when OSAL is being compiled
+#                  standalone (i.e. cmake called directly on the OSAL source dir).
+#                  Default is "OFF" when OSAL is included via 'add_subdirectory' in
+#                  a parent application project such as CFE/CFS.
+#
+# ENABLE_UNIT_TESTS : Boolean, enables build of the unit tests (coverage and functional)
+#
+# OSAL_OMIT_DEPRECATED : Boolean, Compile without deprecated or obsolete features for
+#                  forward compatibility testing.  Any features marked as deprecated
+#                  will be disabled, allowing developers to test software based
+#                  only on currently-supported software features and patterns.
+#
+# OSAL_EXT_SOURCE_DIR : External source directory to check for BSP/OS implementation
+#
 # Additionally the following target is defined if ENABLE_UNIT_TESTS
 # is set TRUE:
 #
@@ -28,7 +74,9 @@
 #                  This is for unit testing OSAL-based applications
 #                  It operates in conjunction with the ut_assert library.
 #
-# This also exports the following variables:
+# For backward compatibility with previous versions, this also exports the following
+# variables.  Code which is depending on these values should migrate to using the
+# interfaces of the provide ut_coverage_compile/link targets instead.
 #
 #  UT_COVERAGE_COMPILE_FLAGS : Compiler flags that must be used to
 #                  instrument code for coverage testing
@@ -40,8 +88,51 @@
 # OSAL resources.
 #
 ######################################################################
-cmake_minimum_required(VERSION 2.8.12)
-project(OSAL C)
+cmake_minimum_required(VERSION 3.5)
+
+# Set the policy dictating use of target_link_libraries across directories
+# Either OLD or NEW should work here but setting it to something avoids a
+# warning when using newer versions of the tool.
+if (CMAKE_VERSION VERSION_GREATER 3.13)
+    cmake_policy(SET CMP0079 NEW)
+endif()
+
+option(OSAL_VALIDATE_API "Validate the OSAL API headers as part of the build" OFF)
+
+# If validation is selected, this requires a C++ compiler
+set(OSAL_LANG C)
+if (OSAL_VALIDATE_API)
+    list(APPEND OSAL_LANG CXX)
+endif()
+
+project(OSAL ${OSAL_LANG})
+
+# define a custom property to track relationship between BSP and OS
+# this should be set on BSP "impl" targets to indicate the correct OS impl to go with it
+define_property(TARGET PROPERTY OSAL_EXPECTED_OSTYPE
+    BRIEF_DOCS
+        "The expected OS type for an OSAL BSP implementation"
+    FULL_DOCS
+        "This property is used to indicate the OS implementation layer that is intended to be paired with the BSP implementation"
+)
+
+# If this build is being performed as a subdirectory within a larger project,
+# then the static libraries and header files will _not_ be installed by default,
+# as in those cases one would typically just use the "osal" target directly.
+# This behavior can be explicitly controlled via the OSAL_INSTALL_LIBRARIES option.
+get_directory_property(HAS_PARENT PARENT_DIRECTORY)
+if (HAS_PARENT)
+    set(OSAL_DEFAULT_INSTALL_LIBRARIES OFF)
+else()
+    set(OSAL_DEFAULT_INSTALL_LIBRARIES ON)
+endif()
+
+option(OSAL_INSTALL_LIBRARIES "Whether or not to install static libraries and headers" ${OSAL_DEFAULT_INSTALL_LIBRARIES})
+option(OSAL_OMIT_DEPRECATED   "Compile without deprecated or obsolete features for backward compatibility testing" OFF)
+
+if (OSAL_INSTALL_LIBRARIES)
+    include(CMakePackageConfigHelpers)
+endif()
 
 # The "OSAL_EXT_SOURCE_DIR" cache variable may be set to a path
 # on the host containing extra OS/BSP implementations which are not
@@ -65,10 +156,10 @@ endforeach(CONFIG OSAL_CONFIGURATION_FILE)
 # Use the supplied configuration to generate the osconfig.h file
 # which can be referenced by the code.  This will be stored in the top level
 # "inc" directory of the binary output directory
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/inc")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/inc")
 configure_file(
     "${OSAL_SOURCE_DIR}/osconfig.h.in"
-    "${OSAL_BINARY_DIR}/osconfig.gen"
+    "${CMAKE_CURRENT_BINARY_DIR}/osconfig.gen"
     @ONLY
 )
 
@@ -76,15 +167,41 @@ configure_file(
 # This avoids unnecessarily rebuilding all code in case cmake was re-run
 # and but generated the same file.
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${OSAL_BINARY_DIR}/osconfig.gen"
-    "${CMAKE_BINARY_DIR}/inc/osconfig.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/osconfig.gen"
+    "${CMAKE_CURRENT_BINARY_DIR}/inc/osconfig.h"
 )
+
+# The "osal_public_api" is an interface target that will always be defined by this script,
+# and refers to the complete set of public API header files for OSAL
+add_library(osal_public_api INTERFACE)
+
+# The initial set of directories that define the OSAL API
+# This is used to initialize the interface include directory property of external targets
+target_include_directories(osal_public_api INTERFACE
+    $<BUILD_INTERFACE:${OSAL_SOURCE_DIR}/src/os/inc>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/inc>
+    $<INSTALL_INTERFACE:include/osal>
+)
+if (OSAL_OMIT_DEPRECATED)
+    target_compile_definitions(osal_public_api INTERFACE OSAL_OMIT_DEPRECATED)
+endif (OSAL_OMIT_DEPRECATED)
+
+
+# OSAL_SYSTEM_BSPTYPE indicate which of the BSP packages
+# to build.  If not defined then no OSAL implementation will be built, however
+# the api interface target (osal_public_api) is still usable.  Therefore
+# this is not considered a fatal error for that reason.  If called with no BSP type,
+# then only the osal_public_api interface target will be defined, and the script ends here.
+if (NOT DEFINED OSAL_SYSTEM_BSPTYPE)
+  message(STATUS "OSAL_SYSTEM_BSPTYPE not defined, no OSAL implementation will be compiled")
+  return()
+endif ()
 
 # The initial set of directories that define the OSAL API
 # This is used to initialize the interface include directory property of external targets
 set(OSAL_API_INCLUDE_DIRECTORIES
     "${OSAL_SOURCE_DIR}/src/os/inc"
-    "${CMAKE_BINARY_DIR}/inc"
+    "${CMAKE_CURRENT_BINARY_DIR}/inc"
 )
 include_directories(${OSAL_API_INCLUDE_DIRECTORIES})
 
@@ -94,23 +211,24 @@ add_definitions(${OSAL_USER_C_FLAGS})
 #
 # Build UT assert -
 # the basic ut_assert library target is always defined regardless of "ENABLE_UNIT_TESTS",
-# but flagged using "EXCLUDE_FROM_ALL" so they won't be built unless actually used.  This
-# is because the library is usable with functional tests, not just unit (coverage) tests.
+# This is because the library is usable with functional tests, not just unit (coverage) tests.
 # This is done early, so that other targets may reference UT_ASSERT_SOURCE_DIR if needed
+# Note that UT assert is only usable with an OSAL BSP implementation, thus this target
+# cannot be compiled unless a specific BSP is selected.
 add_subdirectory(ut_assert)
+
+# The "ut_osapi_stubs" library contains stub functions of the OSAL API calls, used for
+# testing _other_ application code that uses OSAL.  Like UT Assert, this is also
+# provided independently of the local ENABLE_UNIT_TESTS switch, because it mainly affects
+# testing of other components.  That is, even if OSAL itself is not being tested in this
+# build, a dependent application may still be built with testing enabled.
+add_subdirectory(src/ut-stubs ut-stubs)
 
 #
 # Step 1:
 # Build the BSP layer
 #
 
-
-# OSAL_SYSTEM_BSPTYPE indicate which of the BSP packages
-# to build.  This is required and must be defined. Confirm that this exists
-# and error out now if it does not.
-if (NOT DEFINED OSAL_SYSTEM_BSPTYPE)
-  message(FATAL_ERROR "OSAL_SYSTEM_BSPTYPE must be set to the appropriate BSP")
-endif ()
 if (OSAL_EXT_SOURCE_DIR AND IS_DIRECTORY "${OSAL_EXT_SOURCE_DIR}/${OSAL_SYSTEM_BSPTYPE}")
     set(OSAL_BSP_SOURCE_DIR "${OSAL_EXT_SOURCE_DIR}/${OSAL_SYSTEM_BSPTYPE}")
 elseif(IS_DIRECTORY "${OSAL_SOURCE_DIR}/src/bsp/${OSAL_SYSTEM_BSPTYPE}")
@@ -131,12 +249,20 @@ message(STATUS "BSP Selection: ${OSAL_SYSTEM_BSPTYPE} at ${OSAL_BSP_SOURCE_DIR}"
 # The Implementation-Specific BSP subdirectory should define
 # an OBJECT target named "osal_${OSAL_SYSTEM_BSPTYPE}_impl"
 add_subdirectory(${OSAL_BSP_SOURCE_DIR} ${OSAL_SYSTEM_BSPTYPE}_impl)
+
+target_compile_definitions(osal_${OSAL_SYSTEM_BSPTYPE}_impl PRIVATE
+    $<TARGET_PROPERTY:osal_public_api,INTERFACE_COMPILE_DEFINITIONS>
+)
+target_compile_options(osal_${OSAL_SYSTEM_BSPTYPE}_impl PRIVATE
+    $<TARGET_PROPERTY:osal_public_api,INTERFACE_COMPILE_OPTIONS>
+)
 target_include_directories(osal_${OSAL_SYSTEM_BSPTYPE}_impl PRIVATE
     ${OSAL_SOURCE_DIR}/src/bsp/shared/inc
 )
 
 # Confirm that the selected OS is compatible with the selected BSP.
-if (DEFINED OSAL_EXPECTED_OSTYPE)
+get_target_property(OSAL_EXPECTED_OSTYPE osal_${OSAL_SYSTEM_BSPTYPE}_impl OSAL_EXPECTED_OSTYPE)
+if (OSAL_EXPECTED_OSTYPE)
     if (NOT DEFINED OSAL_SYSTEM_OSTYPE)
         # In the event that OSAL_SYSTEM_OSTYPE was not specified at all,
         # implicitly assume the expected OSTYPE.
@@ -146,29 +272,7 @@ if (DEFINED OSAL_EXPECTED_OSTYPE)
         # Not calling this a fatal error because it could possibly be intended during development
         message(WARNING "Mismatched BSP/OS: ${OSAL_SYSTEM_BSPTYPE} implies ${OSAL_EXPECTED_OSTYPE}, but ${OSAL_SYSTEM_OSTYPE} is configured")
     endif(NOT DEFINED OSAL_SYSTEM_OSTYPE)
-endif (DEFINED OSAL_EXPECTED_OSTYPE)
-
-# Propagate the BSP-specific compile definitions and include directories
-# Apply these to the directory-scope COMPILE_DEFINITIONS  and INCLUDE_DIRECTORIES
-# Note this needs to append to the directory property, not overwrite it.
-get_directory_property(OSAL_BASE_COMPILE_DEFINITIONS COMPILE_DEFINITIONS)
-get_target_property(OSAL_BSP_COMPILE_DEFINITIONS osal_${OSAL_SYSTEM_BSPTYPE}_impl INTERFACE_COMPILE_DEFINITIONS)
-set(OSAL_COMPILE_DEFINITIONS)
-if (OSAL_BASE_COMPILE_DEFINITIONS)
-    list(APPEND OSAL_COMPILE_DEFINITIONS ${OSAL_BASE_COMPILE_DEFINITIONS})
-endif (OSAL_BASE_COMPILE_DEFINITIONS)
-if (OSAL_BSP_COMPILE_DEFINITIONS)
-    list(APPEND OSAL_COMPILE_DEFINITIONS ${OSAL_BSP_COMPILE_DEFINITIONS})
-endif (OSAL_BSP_COMPILE_DEFINITIONS)
-set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${OSAL_COMPILE_DEFINITIONS}")
-message(STATUS "OSAL Compile Definitions: ${OSAL_COMPILE_DEFINITIONS}")
-
-# The include directories is simpler, as the include_directories() function
-# appends to the directory property
-get_target_property(OSAL_BSP_INCLUDE_DIRECTORIES osal_${OSAL_SYSTEM_BSPTYPE}_impl INTERFACE_INCLUDE_DIRECTORIES)
-if (OSAL_BSP_INCLUDE_DIRECTORIES)
-    include_directories(${OSAL_BSP_INCLUDE_DIRECTORIES})
-endif (OSAL_BSP_INCLUDE_DIRECTORIES)
+endif (OSAL_EXPECTED_OSTYPE)
 
 set(BSP_SRCLIST
     src/bsp/shared/src/osapi-bsp.c
@@ -184,8 +288,8 @@ add_library(osal_bsp STATIC
     $<TARGET_OBJECTS:osal_${OSAL_SYSTEM_BSPTYPE}_impl>
 )
 
-target_include_directories(osal_bsp INTERFACE
-    ${OSAL_API_INCLUDE_DIRECTORIES}
+target_link_libraries(osal_bsp PUBLIC
+    osal_public_api
 )
 
 target_include_directories(osal_bsp PRIVATE
@@ -220,6 +324,12 @@ message(STATUS "OSAL Selection: ${OSAL_SYSTEM_OSTYPE} at ${OSAL_OS_SOURCE_DIR}")
 # an OBJECT target named "osal_${OSAL_SYSTEM_OSTYPE}_impl"
 add_subdirectory(${OSAL_OS_SOURCE_DIR} ${OSAL_SYSTEM_OSTYPE}_impl)
 
+target_compile_definitions(osal_${OSAL_SYSTEM_OSTYPE}_impl PRIVATE
+    $<TARGET_PROPERTY:osal_public_api,INTERFACE_COMPILE_DEFINITIONS>
+)
+target_compile_options(osal_${OSAL_SYSTEM_OSTYPE}_impl PRIVATE
+    $<TARGET_PROPERTY:osal_public_api,INTERFACE_COMPILE_OPTIONS>
+)
 # The "shared" directory contains internal components which
 # are referenced in implementation OSAL modules, but should _NOT_
 # be referenced outside the OSAL code
@@ -232,6 +342,7 @@ set(OSAL_SRCLIST
     src/os/shared/src/osapi-binsem.c
     src/os/shared/src/osapi-clock.c
     src/os/shared/src/osapi-common.c
+    src/os/shared/src/osapi-condvar.c
     src/os/shared/src/osapi-countsem.c
     src/os/shared/src/osapi-dir.c
     src/os/shared/src/osapi-errors.c
@@ -268,33 +379,16 @@ add_library(osal STATIC
     $<TARGET_OBJECTS:osal_${OSAL_SYSTEM_OSTYPE}_impl>
 )
 
-target_include_directories(osal INTERFACE
-    ${OSAL_API_INCLUDE_DIRECTORIES}
-)
-
 target_include_directories(osal PRIVATE
     ${OSAL_SOURCE_DIR}/src/os/shared/inc
     ${OSAL_SOURCE_DIR}/src/bsp/shared/inc
 )
 
 # Link the OSAL with the BSP
-target_link_libraries(osal osal_bsp)
-
-# propagate the BSP-specific compile flags to OSAL external library target, if defined
-if (OSAL_BSP_COMPILE_DEFINITIONS)
-    target_compile_definitions(osal INTERFACE
-        ${OSAL_BSP_COMPILE_DEFINITIONS}
-    )
-endif(OSAL_BSP_COMPILE_DEFINITIONS)
-
-# propagate the BSP-specific include directories OSAL all external library target, if defined
-if (OSAL_BSP_INCLUDE_DIRECTORIES)
-    target_include_directories(osal INTERFACE
-        ${OSAL_BSP_INCLUDE_DIRECTORIES}
-    )
-endif(OSAL_BSP_INCLUDE_DIRECTORIES)
-
-
+target_link_libraries(osal PUBLIC
+    osal_public_api
+    osal_bsp
+)
 
 # The "build_options.cmake" file within each component may
 # fine-tune the library for this particular build.  This is included
@@ -302,6 +396,12 @@ endif(OSAL_BSP_INCLUDE_DIRECTORIES)
 # on the defined targets and/or use target-specific commands.
 include("${OSAL_BSP_SOURCE_DIR}/build_options.cmake" OPTIONAL)
 include("${OSAL_OS_SOURCE_DIR}/build_options.cmake" OPTIONAL)
+
+# Report the full set of compile definitions after processing all modules
+get_target_property(OSAL_PUBLIC_API_COMPILE_DEFINITIONS osal_public_api INTERFACE_COMPILE_DEFINITIONS)
+message(STATUS "OSAL Compile Definitions: ${OSAL_PUBLIC_API_COMPILE_DEFINITIONS}")
+
+
 
 #
 # UNIT TEST SUPPORT
@@ -316,17 +416,13 @@ if (ENABLE_UNIT_TESTS)
     function(add_osal_ut_exe TGTNAME)
 
       add_executable(${TGTNAME} ${ARGN})
-      target_link_libraries(${TGTNAME} ut_assert osal)
+      target_link_libraries(${TGTNAME} PUBLIC ut_assert osal)
       add_test(${TGTNAME} ${TGTNAME})
       foreach(TGT ${INSTALL_TARGET_LIST})
         install(TARGETS ${TGTNAME} DESTINATION ${TGT}/${UT_INSTALL_SUBDIR})
       endforeach()
 
     endfunction(add_osal_ut_exe)
-
-    # The "ut_osapi_stubs" library contains "stub" functions of the OSAL API calls, used for
-    # testing other application code built on top of OSAL.
-    add_subdirectory(src/ut-stubs ut-stubs)
 
     # The "unit-test-coverage" is a white-box line coverage test.
     # It re-compiles each source unit for coverage analysis and links
@@ -345,19 +441,87 @@ endif (ENABLE_UNIT_TESTS)
 # If this build is being performed as a subdirectory within a larger project,
 # then export the important data regarding compile flags/dirs to that parent
 # This is conditional to avoid warnings in a standalone build.
-get_directory_property(HAS_PARENT PARENT_DIRECTORY)
 if (HAS_PARENT)
     # Export the UT coverage compiler/linker flags to the parent build.
     # These flags are based on the target system type and should be used
     # when building code intended for coverage analysis.
-    set(UT_COVERAGE_COMPILE_FLAGS "${UT_COVERAGE_COMPILE_FLAGS}" PARENT_SCOPE)
-    set(UT_COVERAGE_LINK_FLAGS "${UT_COVERAGE_LINK_FLAGS}" PARENT_SCOPE)
+    if (NOT OSAL_OMIT_DEPRECATED)
+        set(UT_COVERAGE_COMPILE_FLAGS "${UT_COVERAGE_COMPILE_FLAGS}" PARENT_SCOPE)
+        set(UT_COVERAGE_LINK_FLAGS "${UT_COVERAGE_LINK_FLAGS}" PARENT_SCOPE)
+    endif()
 else(HAS_PARENT)
     # In a standalone build, also add the documentation target(s)
     # Note that in a CFE/integrated build, it is expected this will be built separately.
     add_subdirectory(docs/src docs)
 endif(HAS_PARENT)
 
+if (OSAL_INSTALL_LIBRARIES)
 
+    # Install and also export this library, so it can be found via
+    # "find_package()" from some other CMake build
+    install(
+        TARGETS osal_public_api osal_bsp osal
+        EXPORT nasa-osal-export
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include/osal
+        INCLUDES DESTINATION include/osal
+    )
+    install(DIRECTORY
+        ${OSAL_SOURCE_DIR}/src/os/inc/
+        ${CMAKE_CURRENT_BINARY_DIR}/inc/
+      DESTINATION include/osal
+    )
+    install(EXPORT nasa-osal-export
+      FILE NasaOsalTargets.cmake
+      DESTINATION lib/cmake
+    )
+    configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/NasaOsalConfig.cmake.in
+        "${CMAKE_CURRENT_BINARY_DIR}/NasaOsalConfig.cmake"
+        INSTALL_DESTINATION lib/cmake
+    )
+    install(FILES
+          "${CMAKE_CURRENT_BINARY_DIR}/NasaOsalConfig.cmake"
+        DESTINATION lib/cmake
+    )
 
+endif()
 
+if (OSAL_VALIDATE_API)
+
+    # Validate the API header files individually
+    file(GLOB OSAL_API_HEADERS ${OSAL_SOURCE_DIR}/src/os/inc/*.h)
+    set(OSAL_APICHECK_SOURCES)
+    set(OSAL_APICHECK_DIR "${CMAKE_CURRENT_BINARY_DIR}/apicheck")
+
+    foreach(HDR_FILE ${OSAL_API_HEADERS})
+        get_filename_component(HDR "${HDR_FILE}" NAME)
+        string(MAKE_C_IDENTIFIER "${HDR}" HDR_ID)
+        configure_file(${OSAL_SOURCE_DIR}/check_header.c.in ${OSAL_APICHECK_DIR}/check_${HDR_ID}.c)
+        list(APPEND OSAL_APICHECK_SOURCES_C ${OSAL_APICHECK_DIR}/check_${HDR_ID}.c)
+        configure_file(${OSAL_SOURCE_DIR}/check_header.cpp.in ${OSAL_APICHECK_DIR}/check_${HDR_ID}.cpp)
+        list(APPEND OSAL_APICHECK_SOURCES_CXX ${OSAL_APICHECK_DIR}/check_${HDR_ID}.cpp)
+    endforeach(HDR_FILE ${OSAL_API_HEADERS})
+    add_library(osal_apicheck_C STATIC EXCLUDE_FROM_ALL ${OSAL_APICHECK_SOURCES_C})
+    add_library(osal_apicheck_CXX STATIC EXCLUDE_FROM_ALL ${OSAL_APICHECK_SOURCES_CXX})
+    if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+        target_compile_options(osal_apicheck_C PUBLIC -std=c99 -pedantic -Wall -Werror)
+    endif()
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        target_compile_options(osal_apicheck_CXX PUBLIC -std=c++03 -pedantic -Wall -Werror)
+    endif()
+
+    # This causes the check to compile with the same set of defines and include dirs as specified
+    # in the "INTERFACE" properties of the actual module
+    target_link_libraries(osal_apicheck_C PUBLIC
+        osal_public_api
+    )
+    target_link_libraries(osal_apicheck_CXX PUBLIC
+        osal_public_api
+    )
+
+    add_custom_target(osal_apicheck)
+    add_dependencies(osal_apicheck osal_apicheck_C)
+    add_dependencies(osal_apicheck osal_apicheck_CXX)
+
+endif()

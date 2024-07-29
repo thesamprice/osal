@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-queues.c
+ * \file
  * \ingroup  rtems
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -59,20 +57,16 @@ OS_impl_queue_internal_record_t OS_impl_queue_table[OS_MAX_QUEUES];
 
 /*----------------------------------------------------------------
  *
- * Function: OS_Rtems_QueueAPI_Impl_Init
- *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
  *-----------------------------------------------------------------*/
 int32 OS_Rtems_QueueAPI_Impl_Init(void)
 {
     memset(OS_impl_queue_table, 0, sizeof(OS_impl_queue_table));
-    return (OS_SUCCESS);
-} /* end OS_Rtems_QueueAPI_Impl_Init */
+    return OS_SUCCESS;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_QueueCreate_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -118,12 +112,9 @@ int32 OS_QueueCreate_Impl(const OS_object_token_t *token, uint32 flags)
     }
 
     return OS_SUCCESS;
-
-} /* end OS_QueueCreate_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_QueueDelete_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -145,12 +136,9 @@ int32 OS_QueueDelete_Impl(const OS_object_token_t *token)
     }
 
     return OS_SUCCESS;
-
-} /* end OS_QueueDelete_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_QueueGet_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -158,12 +146,13 @@ int32 OS_QueueDelete_Impl(const OS_object_token_t *token)
  *-----------------------------------------------------------------*/
 int32 OS_QueueGet_Impl(const OS_object_token_t *token, void *data, size_t size, size_t *size_copied, int32 timeout)
 {
-    int32                            return_code;
-    rtems_status_code                status;
-    rtems_interval                   ticks;
-    int                              tick_count;
-    rtems_option                     option_set;
-    size_t                           rtems_size;
+    int32             return_code;
+    rtems_status_code status;
+    rtems_interval    ticks;
+    int               tick_count;
+    rtems_option      option_set;
+    /* Implementation read size */
+    size_t                           impl_size;
     rtems_id                         rtems_queue_id;
     OS_impl_queue_internal_record_t *impl;
 
@@ -200,54 +189,49 @@ int32 OS_QueueGet_Impl(const OS_object_token_t *token, void *data, size_t size, 
      */
     status = rtems_message_queue_receive(rtems_queue_id, /* message queue descriptor */
                                          data,           /* pointer to message buffer */
-                                         &rtems_size,    /* returned size of message */
+                                         &impl_size,     /* returned size of message */
                                          option_set,     /* wait option */
                                          ticks           /* timeout */
     );
 
-    if (status == RTEMS_SUCCESSFUL)
+    if (status != RTEMS_SUCCESSFUL)
     {
-        return_code = OS_SUCCESS;
-    }
-    else if (status == RTEMS_TIMEOUT)
-    {
-        return_code = OS_QUEUE_TIMEOUT;
-    }
-    else if (status == RTEMS_UNSATISFIED)
-    {
-        return_code = OS_QUEUE_EMPTY;
-    }
-    else
-    {
-        /* Something else went wrong */
-        return_code = OS_ERROR;
-        OS_DEBUG("Unhandled queue_receive error: %s\n", rtems_status_text(status));
-    }
+        *size_copied = OSAL_SIZE_C(0);
 
-    /*
-    ** Check the size of the message.  If a valid message was
-    ** obtained, indicate success.
-    */
-    if (status == RTEMS_SUCCESSFUL)
-    {
-        *size_copied = rtems_size;
-        if (rtems_size != size)
+        /* Map the rtems error to the most appropriate OSAL return code */
+        if ((timeout == OS_PEND) && (status != RTEMS_TIMEOUT))
         {
-            /* Success, but the size was wrong */
-            return_code = OS_QUEUE_INVALID_SIZE;
+            /* OS_PEND was supposed to pend forever until a message arrived
+             * so something else is wrong.  Otherwise, at this point the only
+             * "acceptable" errno is TIMEDOUT for the other cases.
+             */
+            return_code = OS_ERROR;
+        }
+        else if (status == RTEMS_UNSATISFIED)
+        {
+            return_code = OS_QUEUE_EMPTY;
+        }
+        else if (status == RTEMS_TIMEOUT)
+        {
+            return_code = OS_QUEUE_TIMEOUT;
+        }
+        else
+        {
+            /* Something else went wrong */
+            return_code = OS_ERROR;
+            OS_DEBUG("Unhandled queue_receive error: %s\n", rtems_status_text(status));
         }
     }
     else
     {
-        *size_copied = 0;
+        *size_copied = OSAL_SIZE_C(impl_size);
+        return_code  = OS_SUCCESS;
     }
 
     return return_code;
-} /* end OS_QueueGet_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_QueuePut_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -289,12 +273,9 @@ int32 OS_QueuePut_Impl(const OS_object_token_t *token, const void *data, size_t 
     }
 
     return OS_SUCCESS;
-
-} /* end OS_QueuePut_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_QueueGetInfo_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -304,5 +285,4 @@ int32 OS_QueueGetInfo_Impl(const OS_object_token_t *token, OS_queue_prop_t *queu
 {
     /* No extra info for queues in the OS implementation */
     return OS_SUCCESS;
-
-} /* end OS_QueueGetInfo_Impl */
+}

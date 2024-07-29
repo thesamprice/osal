@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-console.c
+ * \file
  * \ingroup  posix
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -56,8 +54,6 @@ OS_impl_console_internal_record_t OS_impl_console_table[OS_MAX_CONSOLES];
 
 /*----------------------------------------------------------------
  *
- * Function: OS_ConsoleWakeup_Impl
- *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
@@ -70,12 +66,9 @@ void OS_ConsoleWakeup_Impl(const OS_object_token_t *token)
 
     /* post the sem for the utility task to run */
     sem_post(&local->data_sem);
-
-} /* end OS_ConsoleWakeup_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ConsoleTask_Entry
  *
  *  Purpose: Local Helper function
  *           Implements the console output task
@@ -87,6 +80,7 @@ static void *OS_ConsoleTask_Entry(void *arg)
     OS_impl_console_internal_record_t *local;
     OS_object_token_t                  token;
 
+    /* cppcheck-suppress unreadVariable // intentional use of other union member */
     local_arg.opaque_arg = arg;
     if (OS_ObjectIdGetById(OS_LOCK_MODE_REFCOUNT, OS_OBJECT_TYPE_OS_CONSOLE, local_arg.id, &token) == OS_SUCCESS)
     {
@@ -101,11 +95,9 @@ static void *OS_ConsoleTask_Entry(void *arg)
         OS_ObjectIdRelease(&token);
     }
     return NULL;
-} /* end OS_ConsoleTask_Entry */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ConsoleCreate_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -134,6 +126,7 @@ int32 OS_ConsoleCreate_Impl(const OS_object_token_t *token)
             }
             else
             {
+                /* cppcheck-suppress unreadVariable // intentional use of other union member */
                 local_arg.id = OS_ObjectIdFromToken(token);
                 return_code  = OS_Posix_InternalTaskCreate_Impl(&consoletask, OS_CONSOLE_TASK_PRIORITY, 0,
                                                                OS_ConsoleTask_Entry, local_arg.opaque_arg);
@@ -152,4 +145,4 @@ int32 OS_ConsoleCreate_Impl(const OS_object_token_t *token)
     }
 
     return return_code;
-} /* end OS_ConsoleCreate_Impl */
+}

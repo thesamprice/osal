@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * @file
@@ -27,15 +25,15 @@
 #include "osapi-sockets.h"
 #include "utgenstub.h"
 
-extern void UT_DefaultHandler_OS_SocketAddrFromString(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketAddrGetPort(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketAddrInit(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketAddrToString(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketGetIdByName(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketGetInfo(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketOpen(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketRecvFrom(void *, UT_EntryKey_t, const UT_StubContext_t *);
-extern void UT_DefaultHandler_OS_SocketSendTo(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketAddrFromString(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketAddrGetPort(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketAddrInit(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketAddrToString(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketGetIdByName(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketGetInfo(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketOpen(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketRecvFrom(void *, UT_EntryKey_t, const UT_StubContext_t *);
+void UT_DefaultHandler_OS_SocketSendTo(void *, UT_EntryKey_t, const UT_StubContext_t *);
 
 /*
  * ----------------------------------------------------
@@ -161,6 +159,23 @@ int32 OS_SocketBind(osal_id_t sock_id, const OS_SockAddr_t *Addr)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for OS_SocketBindAddress()
+ * ----------------------------------------------------
+ */
+int32 OS_SocketBindAddress(osal_id_t sock_id, const OS_SockAddr_t *Addr)
+{
+    UT_GenStub_SetupReturnBuffer(OS_SocketBindAddress, int32);
+
+    UT_GenStub_AddParam(OS_SocketBindAddress, osal_id_t, sock_id);
+    UT_GenStub_AddParam(OS_SocketBindAddress, const OS_SockAddr_t *, Addr);
+
+    UT_GenStub_Execute(OS_SocketBindAddress, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(OS_SocketBindAddress, int32);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for OS_SocketConnect()
  * ----------------------------------------------------
  */
@@ -209,6 +224,22 @@ int32 OS_SocketGetInfo(osal_id_t sock_id, OS_socket_prop_t *sock_prop)
     UT_GenStub_Execute(OS_SocketGetInfo, Basic, UT_DefaultHandler_OS_SocketGetInfo);
 
     return UT_GenStub_GetReturnValue(OS_SocketGetInfo, int32);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for OS_SocketListen()
+ * ----------------------------------------------------
+ */
+int32 OS_SocketListen(osal_id_t sock_id)
+{
+    UT_GenStub_SetupReturnBuffer(OS_SocketListen, int32);
+
+    UT_GenStub_AddParam(OS_SocketListen, osal_id_t, sock_id);
+
+    UT_GenStub_Execute(OS_SocketListen, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(OS_SocketListen, int32);
 }
 
 /*

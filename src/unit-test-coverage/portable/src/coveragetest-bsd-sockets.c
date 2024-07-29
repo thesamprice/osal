@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \brief Coverage test for no network implementation
@@ -130,7 +128,7 @@ void Test_OS_SetSocketDefaultFlags_Impl(void)
     UtAssert_True(UT_PortablePosixIOTest_Get_Selectable(token.obj_idx), "Socket is selectable");
 }
 
-void Test_OS_SocketBind_Impl(void)
+void Test_OS_SocketBindAddress_Impl(void)
 {
     OS_object_token_t    token = {0};
     OS_SockAddr_t        addr  = {0};
@@ -141,7 +139,7 @@ void Test_OS_SocketBind_Impl(void)
 
     /* Default family case */
     sa->sa_family = -1;
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind_Impl, (&token, &addr), OS_ERR_BAD_ADDRESS);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress_Impl, (&token, &addr), OS_ERR_BAD_ADDRESS);
 
     /* Note - not attempting to hit addrlen > OS_SOCKADDR_MAX_LEN at this point (NOT MC/DC)
      * would require compiling with a small OS_SOCKADDR_MAX_LEN or bigger structure */
@@ -149,20 +147,31 @@ void Test_OS_SocketBind_Impl(void)
     /* Fail bind */
     sa->sa_family = OCS_AF_INET;
     UT_SetDeferredRetcode(UT_KEY(OCS_bind), 1, -1);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind_Impl, (&token, &addr), OS_ERROR);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress_Impl, (&token, &addr), OS_ERROR);
+
+    /* Success with INET address */
+    sa->sa_family = OCS_AF_INET;
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress_Impl, (&token, &addr), OS_SUCCESS);
+
+    /* Success with INET6 address */
+    sa->sa_family = OCS_AF_INET6;
+    OSAPI_TEST_FUNCTION_RC(OS_SocketBindAddress_Impl, (&token, &addr), OS_SUCCESS);
+}
+
+void Test_OS_SocketListen_Impl(void)
+{
+    OS_object_token_t token = {0};
+
+    /* Set up token for index 0 */
+    token.obj_idx = UT_INDEX_0;
+
+    /* Nominal Success */
+    OS_stream_table[0].socket_type = OS_SocketType_STREAM;
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen_Impl, (&token), OS_SUCCESS);
 
     /* Fail listen */
-    sa->sa_family                  = OCS_AF_INET6;
-    OS_stream_table[0].socket_type = OS_SocketType_STREAM;
     UT_SetDeferredRetcode(UT_KEY(OCS_listen), 1, -1);
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind_Impl, (&token, &addr), OS_ERROR);
-
-    /* Success with OS_SocketType_STREAM */
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind_Impl, (&token, &addr), OS_SUCCESS);
-
-    /* Success with ~OS_SocketType_STREAM */
-    OS_stream_table[0].socket_type = ~OS_SocketType_STREAM;
-    OSAPI_TEST_FUNCTION_RC(OS_SocketBind_Impl, (&token, &addr), OS_SUCCESS);
+    OSAPI_TEST_FUNCTION_RC(OS_SocketListen_Impl, (&token), OS_ERROR);
 }
 
 void Test_OS_SocketConnect_Impl(void)
@@ -316,10 +325,10 @@ void Test_OS_SocketRecvFrom_Impl(void)
 
 void Test_OS_SocketSendTo_Impl(void)
 {
-    OS_object_token_t    token = {0};
-    uint8                buffer[UT_BUFFER_SIZE];
-    OS_SockAddr_t        addr = {0};
-    struct OCS_sockaddr *sa   = (struct OCS_sockaddr *)&addr.AddrData;
+    OS_object_token_t    token                  = {0};
+    const uint8          buffer[UT_BUFFER_SIZE] = {0};
+    OS_SockAddr_t        addr                   = {0};
+    struct OCS_sockaddr *sa                     = (struct OCS_sockaddr *)&addr.AddrData;
 
     /* Set up token */
     token.obj_idx = UT_INDEX_0;
@@ -393,9 +402,9 @@ void Test_OS_SocketAddrToString_Impl(void)
 
 void Test_OS_SocketAddrFromString_Impl(void)
 {
-    char                 buffer[UT_BUFFER_SIZE];
-    OS_SockAddr_t        addr = {0};
-    struct OCS_sockaddr *sa   = (struct OCS_sockaddr *)&addr.AddrData;
+    const char           buffer[UT_BUFFER_SIZE] = "UT";
+    OS_SockAddr_t        addr                   = {0};
+    struct OCS_sockaddr *sa                     = (struct OCS_sockaddr *)&addr.AddrData;
 
     /* Bad family */
     sa->sa_family = -1;
@@ -484,7 +493,8 @@ void UtTest_Setup(void)
 {
     ADD_TEST(OS_SocketOpen_Impl);
     ADD_TEST(OS_SetSocketDefaultFlags_Impl);
-    ADD_TEST(OS_SocketBind_Impl);
+    ADD_TEST(OS_SocketBindAddress_Impl);
+    ADD_TEST(OS_SocketListen_Impl);
     ADD_TEST(OS_SocketConnect_Impl);
     ADD_TEST(OS_SocketShutdown_Impl);
     ADD_TEST(OS_SocketAccept_Impl);

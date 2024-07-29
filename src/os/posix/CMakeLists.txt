@@ -5,13 +5,13 @@
 ######################################################################
 
 # This CMake script generates targets specific to the POSIX implementation
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
 # The basic set of files which are always built
 set(POSIX_BASE_SRCLIST
     src/os-impl-binsem.c
     src/os-impl-common.c
     src/os-impl-console.c
+    src/os-impl-condvar.c
     src/os-impl-countsem.c
     src/os-impl-dirs.c
     src/os-impl-errors.c
@@ -78,4 +78,11 @@ endif ()
 add_library(osal_posix_impl OBJECT
     ${POSIX_BASE_SRCLIST}
     ${POSIX_IMPL_SRCLIST}
+)
+
+target_include_directories(osal_posix_impl PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+)
+target_compile_definitions(osal_public_api INTERFACE
+    _POSIX_OS_
 )

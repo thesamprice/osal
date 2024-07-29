@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-filesys.c
+ * \file
  * \ingroup  rtems
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -60,7 +58,6 @@ typedef struct
     const char *               mount_fstype;
     rtems_filesystem_options_t mount_options;
     const void *               mount_data;
-
 } OS_impl_filesys_internal_record_t;
 
 /****************************************************************************************
@@ -94,11 +91,9 @@ int32 OS_Rtems_FileSysAPI_Impl_Init(void)
     /* clear the local filesys table */
     memset(OS_impl_filesys_table, 0, sizeof(OS_impl_filesys_table));
     return OS_SUCCESS;
-} /* end OS_Rtems_FileSysAPI_Impl_Init */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysStartVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -173,11 +168,13 @@ int32 OS_FileSysStartVolume_Impl(const OS_object_token_t *token)
                 OS_DEBUG("rtems_blkdev_create() failed: %s.\n", rtems_status_text(sc));
                 return_code = OS_ERROR;
             }
+            else
+            {
+                OS_DEBUG("RAM disk initialized: volume=%s device=%s address=0x%08lX\n", local->volume_name,
+                         impl->blockdev_name, (unsigned long)local->address);
 
-            OS_DEBUG("RAM disk initialized: volume=%s device=%s address=0x%08lX\n", local->volume_name,
-                     impl->blockdev_name, (unsigned long)local->address);
-
-            return_code = OS_SUCCESS;
+                return_code = OS_SUCCESS;
+            }
             break;
         }
         default:
@@ -192,17 +189,16 @@ int32 OS_FileSysStartVolume_Impl(const OS_object_token_t *token)
      */
     if (return_code == OS_SUCCESS && local->system_mountpt[0] == 0)
     {
-        snprintf(local->system_mountpt, sizeof(local->system_mountpt), "/%s", local->volume_name);
+        local->system_mountpt[0]                                 = '/';
+        local->system_mountpt[sizeof(local->system_mountpt) - 1] = 0;
+        strncpy(&local->system_mountpt[1], local->volume_name, sizeof(local->system_mountpt) - 2);
         OS_DEBUG("OSAL: using mount point %s for %s\n", local->system_mountpt, local->volume_name);
     }
 
     return return_code;
-
-} /* end OS_FileSysStartVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysStopVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -223,12 +219,9 @@ int32 OS_FileSysStopVolume_Impl(const OS_object_token_t *token)
     }
 
     return OS_SUCCESS;
-
-} /* end OS_FileSysStopVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysFormatVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -288,12 +281,9 @@ int32 OS_FileSysFormatVolume_Impl(const OS_object_token_t *token)
     }
 
     return return_code;
-
-} /* end OS_FileSysFormatVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysMountVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -345,12 +335,9 @@ int32 OS_FileSysMountVolume_Impl(const OS_object_token_t *token)
     }
 
     return OS_SUCCESS;
-
-} /* end OS_FileSysMountVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysUnmountVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -375,12 +362,9 @@ int32 OS_FileSysUnmountVolume_Impl(const OS_object_token_t *token)
     }
 
     return OS_SUCCESS;
-
-} /* end OS_FileSysUnmountVolume_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysStatVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -419,12 +403,10 @@ int32 OS_FileSysStatVolume_Impl(const OS_object_token_t *token, OS_statvfs_t *re
         return_code = OS_SUCCESS;
     }
 
-    return (return_code);
-} /* end OS_FileSysStatVolume_Impl */
+    return return_code;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_FileSysCheckVolume_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -433,4 +415,4 @@ int32 OS_FileSysStatVolume_Impl(const OS_object_token_t *token, OS_statvfs_t *re
 int32 OS_FileSysCheckVolume_Impl(const OS_object_token_t *token, bool repair)
 {
     return OS_ERR_NOT_IMPLEMENTED;
-} /* end OS_FileSysCheckVolume_Impl */
+}

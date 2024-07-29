@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-idmap.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -59,6 +57,7 @@ VX_MUTEX_SEMAPHORE(OS_timecb_table_mut_mem);
 VX_MUTEX_SEMAPHORE(OS_module_table_mut_mem);
 VX_MUTEX_SEMAPHORE(OS_filesys_table_mut_mem);
 VX_MUTEX_SEMAPHORE(OS_console_table_mut_mem);
+VX_MUTEX_SEMAPHORE(OS_condvar_table_mut_mem);
 
 static OS_impl_objtype_lock_t OS_task_table_lock      = {.mem = OS_task_table_mut_mem};
 static OS_impl_objtype_lock_t OS_queue_table_lock     = {.mem = OS_queue_table_mut_mem};
@@ -72,6 +71,7 @@ static OS_impl_objtype_lock_t OS_timecb_table_lock    = {.mem = OS_timecb_table_
 static OS_impl_objtype_lock_t OS_module_table_lock    = {.mem = OS_module_table_mut_mem};
 static OS_impl_objtype_lock_t OS_filesys_table_lock   = {.mem = OS_filesys_table_mut_mem};
 static OS_impl_objtype_lock_t OS_console_table_lock   = {.mem = OS_console_table_mut_mem};
+static OS_impl_objtype_lock_t OS_condvar_table_lock   = {.mem = OS_condvar_table_mut_mem};
 
 OS_impl_objtype_lock_t *const OS_impl_objtype_lock_table[OS_OBJECT_TYPE_USER] = {
     [OS_OBJECT_TYPE_UNDEFINED]   = NULL,
@@ -86,11 +86,10 @@ OS_impl_objtype_lock_t *const OS_impl_objtype_lock_table[OS_OBJECT_TYPE_USER] = 
     [OS_OBJECT_TYPE_OS_TIMECB]   = &OS_timecb_table_lock,
     [OS_OBJECT_TYPE_OS_MODULE]   = &OS_module_table_lock,
     [OS_OBJECT_TYPE_OS_FILESYS]  = &OS_filesys_table_lock,
-    [OS_OBJECT_TYPE_OS_CONSOLE]  = &OS_console_table_lock};
+    [OS_OBJECT_TYPE_OS_CONSOLE]  = &OS_console_table_lock,
+    [OS_OBJECT_TYPE_OS_CONDVAR]  = &OS_condvar_table_lock};
 
 /*----------------------------------------------------------------
- *
- * Function: OS_Lock_Global_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -102,16 +101,16 @@ void OS_Lock_Global_Impl(osal_objtype_t idtype)
 
     impl = OS_impl_objtype_lock_table[idtype];
 
-    if (semTake(impl->vxid, WAIT_FOREVER) != OK)
+    if (impl != NULL)
     {
-        OS_DEBUG("semTake() - vxWorks errno %d\n", errno);
+        if (semTake(impl->vxid, WAIT_FOREVER) != OK)
+        {
+            OS_DEBUG("semTake() - vxWorks errno %d\n", errno);
+        }
     }
-
-} /* end OS_Lock_Global_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_Unlock_Global_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -123,16 +122,16 @@ void OS_Unlock_Global_Impl(osal_objtype_t idtype)
 
     impl = OS_impl_objtype_lock_table[idtype];
 
-    if (semGive(impl->vxid) != OK)
+    if (impl != NULL)
     {
-        OS_DEBUG("semGive() - vxWorks errno %d\n", errno);
+        if (semGive(impl->vxid) != OK)
+        {
+            OS_DEBUG("semGive() - vxWorks errno %d\n", errno);
+        }
     }
-
-} /* end OS_Unlock_Global_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- *  Function: OS_WaitForStateChange_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -162,8 +161,6 @@ void OS_WaitForStateChange_Impl(osal_objtype_t idtype, uint32 attempts)
 
 /*----------------------------------------------------------------
  *
- * Function: OS_VxWorks_TableMutex_Init
- *
  *  Purpose: Initialize the tables that the OS API uses to keep track of information
  *           about objects
  *
@@ -191,5 +188,4 @@ int32 OS_VxWorks_TableMutex_Init(osal_objtype_t idtype)
     impl->vxid = semid;
 
     return OS_SUCCESS;
-
-} /* end OS_VxWorks_TableMutex_Init */
+}

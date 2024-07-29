@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -50,6 +48,15 @@
 typedef cpuaddr UT_EntryKey_t;
 
 /**
+ * Type for generic integer value return codes
+ *
+ * By using the C99 "ptrdiff_t" type, this should be large enough to also
+ * store pointer values on the target system, in addition to all normal
+ * integer values.
+ */
+typedef ptrdiff_t UT_IntReturn_t;
+
+/**
  * Macro to obtain a UT_EntryKey_t value from any function name
  */
 #define UT_KEY(Func) ((UT_EntryKey_t)&Func)
@@ -71,6 +78,18 @@ typedef enum
     UT_STUBCONTEXT_ARG_TYPE_DIRECT,  /**< Indicates "ArgPtr" is a direct copy of the actual parameter value */
     UT_STUBCONTEXT_ARG_TYPE_INDIRECT /**< Indicates "ArgPtr" is a pointer to the argument value on the stack */
 } UT_StubContext_Arg_Type_t;
+
+/**
+ * Identifies different genres of return values.  This serves as a hint to determine how to adapt
+ * or convert a return value if the stub has a different return size.
+ */
+typedef enum UT_ValueGenre
+{
+    UT_ValueGenre_OPAQUE  = 0, /**< The nature of the value is opaque, reference is stored directly (NOT copied!) */
+    UT_ValueGenre_INTEGER = 1, /**< The value is an integer and may be converted to integers of other sizes */
+    UT_ValueGenre_FLOAT   = 2, /**< The value is a floating point and may be converted to floats of other sizes */
+    UT_ValueGenre_POINTER = 3  /**< The value is a pointer and should only be used to fulfill a pointer return */
+} UT_ValueGenre_t;
 
 /**
  * Complete Metadata associated with a context argument
@@ -172,9 +191,47 @@ void UT_ResetState(UT_EntryKey_t FuncKey);
  *
  * \param FuncKey The stub function to add the return code to.
  * \param Count   The number of times after which the Retcode should be triggered
- * \param Retcode The code to return after Count calls.
+ * \param Retcode The signed integer value to return after Count calls.
  */
-void UT_SetDeferredRetcode(UT_EntryKey_t FuncKey, int32 Count, int32 Retcode);
+void UT_SetDeferredRetcode(UT_EntryKey_t FuncKey, int32 Count, UT_IntReturn_t Retcode);
+
+/**
+ * Add a type-agnostic return code entry for the given stub function
+ *
+ * This allocates a return value entry in the UT Assert state table and associates it with the
+ * specified stub function.  The DeferCount parameter determines how many times the stub must
+ * be invoked before the return value is used.  If this is passed in as 0, the value will be used
+ * for all stub invocations, and will be retained until the state is reset.  For nonzero defer counts,
+ * the value acts as a decrement counter, and will be used once the counter reaches 0.  In these cases,
+ * the value will be discarded/forgotten once it has been used by the stub.
+ *
+ * The handling of the value depends on the ValueGenre:
+ *
+ *   #UT_ValueGenre_OPAQUE -  The object will be used directly as the return value from the stub, and no
+ *                            conversion of any type will be attempted.
+ *   #UT_ValueGenre_INTEGER - The object is an integer, and thus may be converted to numbers of other sizes/types
+ *                            using integer value semantics.
+ *   #UT_ValueGenre_FLOAT   - The object is a floating point, and thus may be converted to numbers of other
+ *                            sizes/types using floating point value semantics.
+ *   #UT_ValueGenre_POINTER - The object is a pointer, no conversions will be attempted, and the size must be
+ *                            equal to sizeof(void*)
+ *
+ * \note for OPAQUE values, the passed-in pointer value is held directly, and will be dereferenced at the
+ * time when the called stub returns the value.  Notably, the content is NOT cached in the UtAssert internal
+ * storage structures, so the caller must ensure that the pointed-to object remains valid and does not go
+ * out of scope for the remainder of the test case, or until UT_ResetState is called.  Conversely, for INTEGER,
+ * FLOAT, or POINTER value genres, the content will be copied into the internal storage structures, so in
+ * these cases, the pointed-to value may be immediately reused or freed by the caller.
+ *
+ * \param FuncKey    The stub function to add the return code to.
+ * \param ValuePtr   Pointer to the value to return
+ * \param ValueSize  Size of the object referred to by ValuePtr
+ * \param ValueGenre Genre of the object referred to by ValuePtr
+ * \param DeferCount Number of times the stub needs to be called until this value is used
+ * \param TypeName   Data type as an ASCII string, for possible type matching (may be set from a preprocessor macro)
+ */
+void UT_ConfigureGenericStubReturnValue(UT_EntryKey_t FuncKey, const void *ValuePtr, size_t ValueSize,
+                                        UT_ValueGenre_t ValueGenre, int32 DeferCount, const char *TypeName);
 
 /**
  * Add a data buffer for a given stub function
@@ -212,7 +269,7 @@ void UT_SetDataBuffer(UT_EntryKey_t FuncKey, void *DataBuffer, size_t BufferSize
  *
  * \param FuncKey The stub function to reference.
  * \param DataBuffer Set to Pointer to data buffer that is associated with the stub function (output)
- * \param BufferSize Set to Maximum Size of data buffer (output)
+ * \param MaxSize Set to Maximum Size of data buffer (output)
  * \param Position Set to current position in data buffer (output)
  */
 void UT_GetDataBuffer(UT_EntryKey_t FuncKey, void **DataBuffer, size_t *MaxSize, size_t *Position);
@@ -222,9 +279,9 @@ void UT_GetDataBuffer(UT_EntryKey_t FuncKey, void **DataBuffer, size_t *MaxSize,
  * User needs to use UT_ClearDefaultReturnValue to clear the value.
  *
  * \param FuncKey The stub function to add the return code to.
- * \param Value Arbitrary return value (may or may not be used by the stub)
+ * \param Value Arbitrary signed integer return value (may or may not be used by the stub)
  */
-void UT_SetDefaultReturnValue(UT_EntryKey_t FuncKey, int32 Value);
+void UT_SetDefaultReturnValue(UT_EntryKey_t FuncKey, UT_IntReturn_t Value);
 
 /**
  * Disable the default return for the given stub function
@@ -347,38 +404,6 @@ uint32 UT_GetStubCount(UT_EntryKey_t FuncKey);
 void UT_Stub_CallOnce(void (*Func)(void));
 
 /**
- * Check for a deferred return code entry for the given stub function
- *
- * This is a default implementation for deferred retcodes and can be used
- * by stub functions as a common implementation.  If a deferred retcode
- * for the given function is present, this will decrement the associated
- * count.  If the count becomes zero, this function returns true and
- * the Retcode parameter is assigned the originally requested code.
- * Otherwise this function returns false which indicates the default
- * stub implementation should be used.
- *
- * Once the counter reaches zero, this clears the entry so that if a
- * second deferred code is recorded it will be found next.
- *
- * \param FuncKey The stub function to check the return code.
- * \param Retcode Buffer to store deferred return code, if available.
- * \returns true if deferred code is present and counter reached zero
- */
-bool UT_Stub_CheckDeferredRetcode(UT_EntryKey_t FuncKey, int32 *Retcode);
-
-/**
- * Check for a default return value entry for the given stub function
- *
- * If a UT_SetDefaultReturnValue() option is in place for the given function this
- * will return true and increment the internal usage counter.
- *
- * \param FuncKey The stub function to check the return code.
- * \param Value Set to the value supplied to UT_SetDefaultReturnValue()
- * \returns true if force fail mode is active
- */
-bool UT_Stub_CheckDefaultReturnValue(UT_EntryKey_t FuncKey, int32 *Value);
-
-/**
  * Copies data from a test-supplied buffer to the local buffer
  *
  * If a UT_SetDataBuffer() option is in place for the given function this
@@ -462,8 +487,9 @@ void UT_Stub_SetReturnValue(UT_EntryKey_t FuncKey, const void *BufferPtr, size_t
  *
  * \param FuncKey    The stub function associated with the buffer
  * \param ReturnSize Size of the return value
+ * \param TypeName   Expected return value type, as a string
  */
-void UT_Stub_RegisterReturnType(UT_EntryKey_t FuncKey, size_t ReturnSize);
+void UT_Stub_RegisterReturnType(UT_EntryKey_t FuncKey, size_t ReturnSize, const char *TypeName);
 
 /**
  * Obtains direct pointer to buffer for stub return value
@@ -476,8 +502,9 @@ void UT_Stub_RegisterReturnType(UT_EntryKey_t FuncKey, size_t ReturnSize);
  *
  * \param FuncKey    The stub function associated with the buffer
  * \param ReturnSize Size of the return value
+ * \param TypeName   Expected return value type, as a string
  */
-void *UT_Stub_GetReturnValuePtr(UT_EntryKey_t FuncKey, size_t ReturnSize);
+void *UT_Stub_GetReturnValuePtr(UT_EntryKey_t FuncKey, size_t ReturnSize, const char *TypeName);
 
 /**
  * Exports a value from a hook/handler and stages it to be returned to the caller.
@@ -557,9 +584,10 @@ void UT_Stub_RegisterContextWithMetaData(UT_EntryKey_t FuncKey, const char *Name
  *
  * This does not return NULL, such that the returned value can always be dereferenced.
  *
- * \param ContextPtr   The context structure containing arguments
- * \param Name         Argument name to find
- * \param ExpectedSize The size of the expected object type
+ * \param ContextPtr       The context structure containing arguments
+ * \param Name             Argument name to find
+ * \param ExpectedTypeSize The size of the expected object type
+ *
  * \returns Pointer to buffer containing the value.
  */
 const void *UT_Hook_GetArgPtr(const UT_StubContext_t *ContextPtr, const char *Name, size_t ExpectedTypeSize);
@@ -588,8 +616,10 @@ const void *UT_Hook_GetArgPtr(const UT_StubContext_t *ContextPtr, const char *Na
  * \param FunctionName  The printable name of the actual function called, for the debug message.  If
  *    NULL then no debug message will be generated.
  * \param FuncKey       The Key to look up in the table
+ * \param DefaultRc     Default return code
+ * \param ArgList       Argument list
  */
-int32 UT_DefaultStubImplWithArgs(const char *FunctionName, UT_EntryKey_t FuncKey, int32 DefaultRc, va_list va);
+int32 UT_DefaultStubImplWithArgs(const char *FunctionName, UT_EntryKey_t FuncKey, int32 DefaultRc, va_list ArgList);
 
 /**
  * Handles a stub call for a variadic function
@@ -605,8 +635,10 @@ int32 UT_DefaultStubImplWithArgs(const char *FunctionName, UT_EntryKey_t FuncKey
  *
  * \sa UT_DefaultStubImplWithArgs()
  *
- * \param FuncKey       The key of the stub being executed
- * \param FunctionName  The printable name of the actual function called, for the debug message.
+ * \param FuncKey        The key of the stub being executed
+ * \param FunctionName   The printable name of the actual function called, for the debug message.
+ * \param DefaultHandler The default handler
+ * \param VaList         Argument list
  */
 void UT_ExecuteVaHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_VaHandlerFunc_t DefaultHandler,
                          va_list VaList);
@@ -637,8 +669,9 @@ int32 UT_DefaultStubImpl(const char *FunctionName, UT_EntryKey_t FuncKey, int32 
  *
  * \sa UT_DefaultStubImplWithArgs()
  *
- * \param FuncKey       The key of the stub being executed
- * \param FunctionName  The printable name of the actual function called, for the debug message.
+ * \param FuncKey        The key of the stub being executed
+ * \param FunctionName   The printable name of the actual function called, for the debug message.
+ * \param DefaultHandler The default handler
  */
 void UT_ExecuteBasicHandler(UT_EntryKey_t FuncKey, const char *FunctionName, UT_HandlerFunc_t DefaultHandler);
 

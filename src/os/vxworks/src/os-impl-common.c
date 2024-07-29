@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-common.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -54,8 +52,6 @@ static TASK_ID OS_idle_task_id;
 ****************************************************************************************/
 
 /*----------------------------------------------------------------
- *
- * Function: OS_API_Impl_Init
  *
  *  Purpose: Initialize the tables that the OS API uses to keep track of information
  *           about objects
@@ -104,12 +100,10 @@ int32 OS_API_Impl_Init(osal_objtype_t idtype)
             break;
     }
 
-    return (return_code);
-} /* end OS_API_Impl_Init */
+    return return_code;
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_IdleLoop_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -120,11 +114,9 @@ void OS_IdleLoop_Impl(void)
     TASK_ID tid     = taskIdSelf();
     OS_idle_task_id = tid;
     taskSuspend(tid);
-} /* end OS_IdleLoop_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ApplicationShutdown_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -133,7 +125,7 @@ void OS_IdleLoop_Impl(void)
 void OS_ApplicationShutdown_Impl(void)
 {
     taskResume(OS_idle_task_id);
-} /* end OS_ApplicationShutdown_Impl */
+}
 
 /****************************************************************************************
                               GENERIC SEMAPHORE API
@@ -150,8 +142,6 @@ void OS_ApplicationShutdown_Impl(void)
 
 /*----------------------------------------------------------------
  *
- * Function: OS_VxWorks_GenericSemGive
- *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
  *-----------------------------------------------------------------*/
@@ -164,11 +154,9 @@ int32 OS_VxWorks_GenericSemGive(SEM_ID vxid)
         return OS_SEM_FAILURE;
     }
     return OS_SUCCESS;
-} /* end OS_VxWorks_GenericSemGive */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_VxWorks_GenericSemTake
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
@@ -199,4 +187,4 @@ int32 OS_VxWorks_GenericSemTake(SEM_ID vxid, int sys_ticks)
     }
 
     return OS_SUCCESS;
-} /* end OS_VxWorks_GenericSemTake */
+}

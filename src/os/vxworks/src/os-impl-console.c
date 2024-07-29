@@ -1,25 +1,23 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
- * \file     os-impl-console.c
+ * \file
  * \ingroup  vxworks
  * \author   joseph.p.hickey@nasa.gov
  *
@@ -62,8 +60,6 @@ OS_impl_console_internal_record_t OS_impl_console_table[OS_MAX_CONSOLES];
 
 /*----------------------------------------------------------------
  *
- * Function: OS_ConsoleWakeup_Impl
- *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
  *
@@ -79,12 +75,9 @@ void OS_ConsoleWakeup_Impl(const OS_object_token_t *token)
     {
         OS_DEBUG("semGive() - vxWorks errno %d\n", errno);
     }
-
-} /* end OS_ConsoleWakeup_Impl */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ConsoleTask_Entry
  *
  *  Purpose: Local helper routine, not part of OSAL API.
  *
@@ -114,11 +107,9 @@ int OS_VxWorks_ConsoleTask_Entry(int arg)
 
     /* Return OK since called from taskSpawn, error is reported in debug message */
     return OK;
-} /* end OS_ConsoleTask_Entry */
+}
 
 /*----------------------------------------------------------------
- *
- * Function: OS_ConsoleCreate_Impl
  *
  *  Purpose: Implemented per internal OSAL API
  *           See prototype for argument/return detail
@@ -171,4 +162,4 @@ int32 OS_ConsoleCreate_Impl(const OS_object_token_t *token)
     }
 
     return return_code;
-} /* end OS_ConsoleCreate_Impl */
+}

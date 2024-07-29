@@ -1,22 +1,20 @@
-/*
- *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+/************************************************************************
+ * NASA Docket No. GSC-18,719-1, and identified as “core Flight System: Bootes”
  *
- *  Copyright (c) 2019 United States Government as represented by
- *  the Administrator of the National Aeronautics and Space Administration.
- *  All Rights Reserved.
+ * Copyright (c) 2020 United States Government as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ * All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ************************************************************************/
 
 /**
  * \file
@@ -192,13 +190,20 @@ void UT_DefaultHandler_OS_TimedWrite(void *UserObj, UT_EntryKey_t FuncKey, const
 void UT_DefaultHandler_OS_stat(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context)
 {
     os_fstat_t *filestats = UT_Hook_GetArgValueByName(Context, "filestats", os_fstat_t *);
+    size_t      CopySize;
     int32       Status;
 
     UT_Stub_GetInt32StatusCode(Context, &Status);
 
     if (Status == OS_SUCCESS)
     {
-        UT_Stub_CopyToLocal(UT_KEY(OS_stat), filestats, sizeof(*filestats));
+        CopySize = UT_Stub_CopyToLocal(UT_KEY(OS_stat), filestats, sizeof(*filestats));
+
+        /* Ensure memory is set if not provided by test */
+        if (CopySize < sizeof(*filestats))
+        {
+            memset(filestats, 0, sizeof(*filestats));
+        }
     }
 }
 
