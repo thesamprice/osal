@@ -40,8 +40,8 @@ set(RTEMS_IMPL_SRCLIST
 # then build the module loader
 if (OSAL_CONFIG_INCLUDE_DYNAMIC_LOADER)
     list(APPEND RTEMS_IMPL_SRCLIST
-        src/os-impl-loader.c                    # Use RTEMS-specific versions of the load/unload routines
-        ../portable/os-impl-posix-dl-symtab.c   # Use Standard POSIX implementation for symbol lookups
+        src/os-impl-loader.c
+        src/os-impl-symtab.c
     )
 else ()
     list(APPEND RTEMS_IMPL_SRCLIST
