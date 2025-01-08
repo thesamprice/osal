@@ -299,5 +299,7 @@ int32 OS_SymbolTableDump_Impl(const char *filename, size_t size_limit)
         state->StatusCode = OS_ERROR;
     }
 
+    rtems_rtl_unlock ();
+
     return state->StatusCode;
 }
