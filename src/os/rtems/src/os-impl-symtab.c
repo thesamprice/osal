@@ -44,7 +44,7 @@
 #include <rtems/printer.h>
 #include <rtems/rtl/rtl.h>
 
-#define DEBUG_PRINT_SYMBOLS
+//#define DEBUG_PRINT_SYMBOLS
 
 typedef struct
 {
