@@ -42,7 +42,7 @@
 
 #define OS_SHELL_COPY_BLOCK_SIZE        512
 #define OS_SHELL_CMD_TASK_STACK_SIZE    16384
-#define OS_SHELL_CMD_TASK_PRIORITY      250
+#define OS_SHELL_CMD_TASK_PRIORITY      200
 #define OS_SHELL_INTERPRETER_CMD        "#!joel"
 #define OS_SHELL_TEMP_INPUT_FILE_NAME   "/cf/shell_tmp_in.txt"
 #define OS_SHELL_TEMP_OUTPUT_FILE_NAME  "/cf/shell_tmp_out.txt"
